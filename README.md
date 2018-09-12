@@ -1,4 +1,4 @@
-# ![](../doc/logo.svg "Ethereum Input Bus") Ethereum Input Bus (alpha)
+# ![](https://raw.githubusercontent.com/smoelius/ethereum_input_bus/master/doc/logo.svg?sanitize=true "Ethereum Input Bus") Ethereum Input Bus (alpha)
 
 Samuel E. Moelius III (<sam@moeli.us>)
 
