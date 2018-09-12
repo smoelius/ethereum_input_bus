@@ -1,0 +1,70 @@
+<svg width="200" height="160" xmlns="http://www.w3.org/2000/svg">
+  <path
+    stroke="black"
+    stroke-width="1"
+    vector-effect="non-scaling-stroke"
+    fill="#0000ff"
+    fill-rule="evenodd"
+    transform="scale(0.8)"
+    d="
+      M 60 10
+      a 50 50 0 0 0 -30 90
+      a 50 50 0 0 0 30 90
+      l 35 0
+      a 5 5 0 0 0 5 -5
+      l 0 -10
+      a 5 5 0 0 0 -5 -5
+      l -35 0
+      a 30 30 0 0 1 0 -60
+      l 35 0
+      a 5 5 0 0 0 5 -5
+      l 0 -10
+      a 5 5 0 0 0 -5 -5
+      l -35 0
+      a 30 30 0 0 1 0 -60
+      l 35 0
+      a 5 5 0 0 0 5 -5
+      l 0 -10
+      a 5 5 0 0 0 -5 -5
+      l -35 0
+
+      m 55 0
+      a 5 5 0 0 0 -5 5
+      l 0 170
+      a 5 5 0 0 0 5 5
+      l 10 0
+      a 5 5 0 0 0 5 -5
+      l 0 -170
+      a 5 5 0 0 0 -5 -5
+      l -10 0
+
+      m 30 0
+      a 5 5 0 0 0 -5 5
+      l 0 170
+      a 5 5 0 0 0 5 5
+      l 45 0
+      a 50 50 0 0 0 30 -90
+      a 50 50 0 0 0 -30 -90
+      l -45 0
+      m 15 20
+      l 0 60
+      l 30 0
+      a 30 30 0 0 0 0 -60
+      l -30 0
+      m 0 80
+      l 0 60
+      l 30 0
+      a 30 30 0 0 0 0 -60
+      l -30 0
+    "
+  />
+  <!-- <path
+    stroke="black"
+    stroke-width="1"
+    fill="none"
+    d="
+      M 125 0
+      L 125 200
+    "
+  /> -->
+</svg>

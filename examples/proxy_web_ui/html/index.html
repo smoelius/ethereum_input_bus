@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!-----------------------------------------------------------------------------------------------------
+ ! index.html for EIB Proxy Web UI
+ !----------------------------------------------------------------------------------------------------->
+
+<html class="container full_width full_height">
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+  <head>
+    <title>EIB Proxy</title>
+    
+    <link rel="stylesheet" type="text/css" href="proxy_web_ui.css">
+  </head>
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+  <body class="horizontal_container full_width full_height">
+    
+    <!-------------------------------------------------------------------------------------------------
+     ! Left pane
+     !------------------------------------------------------------------------------------------------->
+    
+    <div class="vertical_container left_pane">
+      <div class="horizontal_container">
+        <img src="logo.svg">
+        <div class="vertical_container">
+          <div class="rubber_height"></div>
+          <h1>Proxy Web UI</h1>
+        </div>
+      </div>
+      
+      <table>
+        <tr>
+          <td>Proxy address:</td>
+          <td><input id="proxy_address" autofocus></td>
+        </tr>
+        <tr>
+          <td>IPFS multihash:</td>
+          <td><input id="ipfs_multihash" value="Qmd286K6pohQcTKYqnS1YhWrCiS4gz7Xi34sdwMe9USZ7u"></td>
+        </tr>
+        <tr>
+          <td>File length:</td>
+          <td><input id="file_length" value="443230"></td>
+        </tr>
+        <tr>
+          <td>Merkle root:</td>
+          <td><input id="merkle_root" value="0x7854cdeeb3c1372d55cabba556c98b284fd7fa7f0df8ae787807d323cd33c10b"></td>
+        </tr>
+        <tr>
+          <td>Start:</td>
+          <td><input id="start" value="0"></td>
+        </tr>
+        <tr>
+          <td>End:</td>
+          <td><input id="end" value="128"></td>
+        </tr>
+        <tr>
+          <td>Value (milliether):</td>
+          <td><input id="value" value="10"></td>
+        </tr>
+      </table>
+      
+      <div class="container">
+        <div class="horizontal_container centering full_width" id="cancel_container">
+          <div class="rubber_width"></div>
+          <div class="loader" id="loader"></div>
+          <button onclick="stop()"/>Cancel</button>
+        </div>
+        <div class="horizontal_container centering full_width full_height top_aligned" id="request_container">
+          <div class="rubber_width"></div>
+          <button onclick="request()"/>Request</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-------------------------------------------------------------------------------------------------
+     ! Middle pane
+     !------------------------------------------------------------------------------------------------->
+    
+    <div class="vertical_container middle_pane">
+      <div class="fixed_height"></div>
+      <div class="rubber_height outlined" id="hex_container">
+        <span id="hex"></span>
+      </div>
+      <div class="fixed_height"></div>
+    </div>
+    
+    <div class="fixed_width"></div>
+    
+    <!-------------------------------------------------------------------------------------------------
+     ! Right pane
+     !------------------------------------------------------------------------------------------------->
+    
+    <div class="vertical_container right_pane">
+      <div class="fixed_height"></div>
+      <div class="rubber_height outlined" id="ascii_container">
+        <span id="ascii"></span>
+      </div>
+      <div class="fixed_height"></div>
+    </div>
+    
+    <div class="fixed_width"></div>
+    
+    <!------------------------------------------------------------------------------------------------->
+    
+    <script>var exports = {};</script>
+    <script src="main.js"></script>
+    
+    <!------------------------------------------------------------------------------------------------->
+    
+  </body>
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+</html>
+
+<!----------------------------------------------------------------------------------------------------->

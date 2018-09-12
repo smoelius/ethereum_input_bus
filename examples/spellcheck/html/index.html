@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-----------------------------------------------------------------------------------------------------
+ ! index.html for Spellcheck
+ !----------------------------------------------------------------------------------------------------->
+
+<html class="container full_width full_height">
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+  <head>
+    <title>Spellcheck</title>
+    
+    <link rel="stylesheet" type="text/css" href="spellcheck.css">
+  </head>
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+  <body class="vertical_container centering full_width full_height">
+    
+    <!------------------------------------------------------------------------------------------------->
+    
+    <div class="rubber_height"></div>
+    
+    <h3>Using dictionary "<span id="ipfs_multihash"></span>".</h3>
+    
+    <div>
+      Dictionary byte length: <span id="file_length"></span>
+    </div>
+    
+    <div>
+      Approximate gas required to store entire dictionary on blockchain: <span id="file_gas"></span>
+    </div>
+    
+    <div>
+      Approximate ether required at current <a href="https://ethgasstation.info">ethgasstation.info</a> SafeLow gas rate (<span id="gas_rate"></span> Gwei): <span id="file_ether"></span>
+    </div>
+    
+    <br>
+    
+    <div class="container">
+      <h3 class="full_width" id="checking_message">Checking "<span id="checking_word"></span>"...</h3>
+      <h3 class="full_width top_aligned" id="valid_message">"<span id="valid_word"></span>" is <span class="valid">valid</span>.</h3>
+      <h3 class="full_width top_aligned" id="invalid_message">"<span id="invalid_word"></span>" is <span class="invalid">invalid</span>.</h3>
+    </div>
+    
+    <div id="gas_used_container">
+      Gas used: <span id="gas_used"></span>
+    </div>
+    
+    <div id="value_used_container">
+      Milliether used: <span id="value_used"></span>
+    </div>
+    
+    <div id="value_refunded_container">
+      Milliether refunded: <span id="value_refunded"></span>
+    </div>
+    
+    <br>
+    
+    <h3 id="prompt_message">What word would you like to spellcheck?</h3>
+    
+    <table>
+      <tr>
+        <td id="word_label">Word:</td>
+        <td><input id="word" value="seigniorage" autofocus></td>
+      </tr>
+      <tr>
+        <td id="value_label">Value (milliether):</td>
+        <td><input id="value" value="10"></td>
+      </tr>
+    </table>
+    
+    <br>
+    
+    <div class="container">
+      <div class="horizontal_container centering" id="cancel_container">
+        <div class="loader" id="loader"></div>
+        <button onclick="stop()"/>Cancel</button>
+      </div>
+      <div class="vertical_container centering full_width full_height top_aligned" id="spellcheck_container">
+        <div class="rubber_height"></div>
+        <button onclick="window.spellcheck()"/>Spellcheck</button>
+        <div class="rubber_height"></div>
+      </div>
+    </div>
+    
+    <div class="rubber_height"></div>
+    
+    <!------------------------------------------------------------------------------------------------->
+    
+    <script>var exports = {};</script>
+    <script src="main.js"></script>
+    
+    <!------------------------------------------------------------------------------------------------->
+    
+  </body>
+  
+  <!--------------------------------------------------------------------------------------------------->
+  
+</html>
+
+<!----------------------------------------------------------------------------------------------------->

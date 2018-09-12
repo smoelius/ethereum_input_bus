@@ -1,0 +1,164 @@
+/*====================================================================================================*
+ * spellcheck.css
+ *====================================================================================================*/
+
+.container {
+  position: relative;
+}
+
+.horizontal_container {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+}
+
+.vertical_container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.full_width {
+  width: 100%;
+}
+
+.full_height {
+  height: 100%;
+}
+
+.centering {
+  align-items: center;
+  text-align: center;
+}
+
+.rubber_width {
+  width: 0px;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.rubber_height {
+  height: 0px;
+  flex-grow: 1;
+  flex-shrink: 0;
+}
+
+.fixed_width {
+  width: 3px;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.fixed_height {
+  height: 3px;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.top_aligned {
+  position: absolute;
+  top: 0;
+}
+
+.valid {
+  color: green;
+}
+
+.invalid {
+  color: red;
+}
+
+/*====================================================================================================*
+ * loader: adapted from: https://www.w3schools.com/howto/howto_css_loader.asp
+ *====================================================================================================*/
+
+.loader {
+  border: 12px solid #f3f3f3; /* Light grey */
+  border-top: 12px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 0px;
+  height: 0px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+/*====================================================================================================*/
+
+html {
+  margin: 0px;
+}
+
+body {
+  margin: 0px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+div {
+  margin: 0px;
+}
+
+h3 {
+  margin: 0px;
+}
+
+table {
+  margin: 0px;
+  text-align: left;
+}
+
+input {
+  margin: 0px;
+  width: 480px;
+}
+
+button {
+  margin: 3px;
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+span {
+  margin: 0px;
+}
+
+/*====================================================================================================*/
+
+#checking_message {
+  visibility: hidden;
+}
+
+#valid_message {
+  visibility: hidden;
+}
+
+#invalid_message {
+  visibility: hidden;
+}
+
+#gas_used_container {
+  visibility: hidden;
+}
+
+#value_used_container {
+  visibility: hidden;
+}
+
+#value_refunded_container {
+  visibility: hidden;
+}
+
+#cancel_container {
+  visibility: hidden;
+}
+
+#spellcheck_container {
+  visibility: visible;
+}
+
+/*====================================================================================================*/

@@ -1,0 +1,2 @@
+* The Ethereum-blockchain size has exceeded 1TB, and yes, it’s an issue
+  https://hackernoon.com/the-ethereum-blockchain-size-has-exceeded-1tb-and-yes-its-an-issue-2b650b5f4f62
