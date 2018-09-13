@@ -1,30 +1,35 @@
-# Ethereum Input Bus examples
+# EIB examples
 
-This directory contains two sample webapps written to use EIB.
+The `examples` directory contains two sample webapps written to use EIB.
 
 * Proxy Web UI simply sends requests to EIB and receives responses from EIB using a web interface.
 
-* Spellcheck is a contract that checks for the presence/absence of a word in a dictionary.  EIB is used to read from the dictionary.
+* Spellcheck is a contract that checks for the presence/absence of a word in a dictionary.  EIB is used
+  to read from the dictionary.
 
 To run the Spellcheck example, perform the steps below with X = the path the Spellcheck directory.
 
-To run the Proxy Web UI example, perform the steps below with X = the path to the Proxy Web UI directory, but skip step 5.
+To run the Proxy Web UI example, perform the steps below with X = the path to the Proxy Web UI
+directory, but skip step 5.
 
-0. Ensure that Ganache, Metamask, and all of the prerequisites listed in [README.md](../README.md) are installed.
+0. Ensure that [Ganache](https://truffleframework.com/ganache), [Metamask](https://metamask.io/), and
+   all of the prerequisites listed in [README.md](../README.md#user-content-prerequisites) are
+   installed.
 
 1. Launch Ganache.
 
-2. Send your Metamask account some ether.  Perhaps the simplest way to do this is by entering the following in the `truffle console`:
+2. Open a terminal window in which to perform steps 3-7 below.
 
-  * `web3.eth.sendTransaction({to: "`*your_Metamask_account*`", from: "`*Ganache's_first_account*`", value: web3.toWei(10, "ether") })`
+3. Send your Metamask account some ether: cd to the `eib` directory, type `truffle console`, enter the
+   following command, and then type `ctrl-D` to exit:
 
-3. Open a terminal window in which to perform steps 4-7 below.
+  * `web3.eth.sendTransaction({to: "`*your_Metamask_account*`", from: "`*first_account_in_Ganache*`", value: web3.toWei(10, "ether") })`
 
 4. cd to the `eib` directory and type `make clean deploy`.
 
 5. **Spellcheck only:** cd to X and type `make clean deploy`.
 
-6. cd to the top of the repository and type `make`.
+6. cd to the top of the EIB repository and type `make`.
 
 7. cd to X and type `./launch.sh`.
 
