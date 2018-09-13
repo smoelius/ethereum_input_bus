@@ -2,7 +2,9 @@
 
 Samuel E. Moelius III (<sam@moeli.us>)
 
-If EIB could be of use to your project, then please contact me (<sam@moeli.us>) and/or consider a donation to 0xD07C0Bb4B0E5943cbeD93c337686217D91655a2e.
+If EIB could be of use to your project, then please contact me (<sam@moeli.us>) and/or consider a
+donation to 0xD07C0Bb4B0E5943cbeD93c337686217D91655a2e.
+
 
 Contents
 1. [Description](#user-content-description)
@@ -46,6 +48,8 @@ The EIB repository consists of (TODO: link to READMEs):
 
 Building EIB requires that the following NPM packages be installed globally:
 
+  * `ipfs`
+
   * `mocha`
 
   * `truffle`
@@ -54,14 +58,21 @@ Building EIB requires that the following NPM packages be installed globally:
 
   * `typescript`
 
+  * `webpack`
+
+The above packages can be installed with the following command:
+
+    npm install -g ipfs mocha truffle ts-interface-builder typescript webpack
+
 
 ## Building
 
 Having verified that the above prerequisites are installed, one should be able to build EIB by simply
 typing `make`.
 
-Note that running the [examples](examples/README.md) also requires that Ganache and Metamask be installed.  However,
-Ganache and Metamask are not required to build the [examples](examples/README.md).
+Note that running the [examples](examples/README.md) also requires that
+[Ganache](https://truffleframework.com/ganache) and [Metamask](https://metamask.io/) be installed.
+However, Ganache and Metamask are not required to build the examples.
 
 
 ## Testing
