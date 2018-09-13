@@ -1,6 +1,10 @@
 {
   "name": "ethereum_input_bus",
   "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/smoelius/ethereum_input_bus"
+  },
   "description": "Ethereum Input Bus",
   "dependencies": {
     "@0xproject/typescript-typings": "^2.0.0",
@@ -14,7 +18,7 @@
     "bs58": "^4.0.1",
     "chalk": "^2.4.1",
     "ether-pudding": "git+https://github.com/barkthins/ether-pudding.git",
-    "ipfs": "^0.31.7",
+    "ipfs": "^0.32.0",
     "js-sha3": "^0.8.0",
     "lodash": "^4.17.10",
     "minimist": "^1.2.0",
