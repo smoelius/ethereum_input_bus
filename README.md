@@ -21,7 +21,7 @@ Contents
 Ethereum Input Bus (EIB) provides a means for moving data on-chain securely.
 
 More specifically, EIB allows an Ethereum contract to crowd-source a read from the InterPlanetary File
-System (IPFS), and for a respondent to supply the data and prove that the data correct, i.e., the data
+System (IPFS), and for a respondent to supply the data and prove that the data is correct, i.e., the data
 comes from the correct file, the data comes from the correct offset within that file, and the data is
 of the correct length.
 
