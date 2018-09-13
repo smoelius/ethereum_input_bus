@@ -1,6 +1,8 @@
-/*.js
 /build
 /Dict.sol
+/Dict_artifacts.js
 /dist
+/Input_bus_artifacts.js
+/Spellcheck_artifacts.js
 /words.sorted
 /words-*.el7.noarch.rpm
