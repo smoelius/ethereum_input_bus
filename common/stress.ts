@@ -5,7 +5,6 @@
 import assert from "assert"
 import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
-import _ from "lodash"
 import * as conversion from "./conversion"
 import * as eth from "./eth"
 import { get_file_info } from "./file_info"
@@ -85,7 +84,7 @@ export function stress(context: Test_context): void {
                 callback: (event, receipt) => {
                   request = guard.Request_announced(event)
                   assert(request.file_addr_type.equals(new BigNumber(0)))
-                  assert(_.isEqual(request.file_addr.map(toString), file_addr.map(toString)))
+                  assert(conversion.json_equals(request.file_addr, file_addr))
                   assert(request.start.equals(start))
                   assert(request.end.equals(end))
                   block_number = receipt.blockNumber
@@ -227,8 +226,8 @@ export function stress(context: Test_context): void {
                 callback: (event, receipt) => {
                   const supplement = guard.Request_supplied(event)
                   assert(supplement.req_id.equals(request.req_id))
-                  assert(_.isEqual(supplement.data.map(toString), data.map(toString)))
-                  assert(_.isEqual(supplement.proof.map(toString), proof.map(toString)))
+                  assert(conversion.json_equals(supplement.data.map(conversion.to_bignumber), data))
+                  assert(conversion.json_equals(supplement.proof.map(conversion.to_bignumber), proof))
                   if (!(context.options.external_supplier === true)
                       && (data.length !== 0 || proof.length !== 0)) {
                     const callback_gas_used
@@ -246,8 +245,8 @@ export function stress(context: Test_context): void {
                 callback: (event, receipt) => {
                   const callback = guard.Proxy_callback(event)
                   assert(callback.req_id.equals(request.req_id))
-                  assert(_.isEqual(callback.data.map(toString), data.map(toString)))
-                  assert(_.isEqual(callback.proof.map(toString), proof.map(toString)))
+                  assert(conversion.json_equals(callback.data, data))
+                  assert(conversion.json_equals(callback.proof, proof))
                   return almost_done()
                 }
               }]

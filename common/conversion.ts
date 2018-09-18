@@ -55,3 +55,9 @@ export function to_bignumber(value: string): BigNumber {
 }
 
 /*====================================================================================================*/
+
+export function json_equals<T>(x: T, y: T): boolean {
+  return JSON.stringify(x) === JSON.stringify(y)
+}
+
+/*====================================================================================================*/

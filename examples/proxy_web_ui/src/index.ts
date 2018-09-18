@@ -4,7 +4,6 @@
 
 import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
-import _ from "lodash"
 import Web3 from "web3"
 import * as conversion from "../../../common/conversion"
 import * as eth from "../../../common/eth"
@@ -138,7 +137,7 @@ function request(): void {
             const request = guard.Request_announced(event)
             if (!(request.requestor === proxy_address
                 && request.file_addr_type.equals(new BigNumber(0)) // smoelius: XXX: Define this.
-                && _.isEqual(request.file_addr.map(toString), file_addr.map(toString))
+                && conversion.json_equals(request.file_addr, file_addr)
                 && request.start.equals(start)
                 && request.end.equals(end)
                 && request.ltiov.equals(new BigNumber(0))

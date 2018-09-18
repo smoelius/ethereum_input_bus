@@ -4,7 +4,6 @@
 
 import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
-import _ from "lodash"
 import Web3 from "web3"
 import * as conversion from "../../../common/conversion"
 import * as eth from "../../../common/eth"
