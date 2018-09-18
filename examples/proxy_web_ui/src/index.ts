@@ -8,6 +8,7 @@ import Web3 from "web3"
 import * as conversion from "../../../common/conversion"
 import * as eth from "../../../common/eth"
 import { guard } from "../../../common/guard"
+import * as web from "../../../common/web"
 
 /*====================================================================================================*/
 
@@ -48,18 +49,34 @@ window.addEventListener("load", () => {
     window.web3 = new Web3(window.web3.currentProvider)
 
     if (Object.keys(Proxy_requestor_artifacts.networks).length !== 1) {
-      throw new Error("Internal error: Unexpected number of networks.")
+      return stop_with_error(true, "Unexpected number of networks.")
     }
     const network = Object.keys(Proxy_requestor_artifacts.networks)[0]
-    cast<HTMLInputElement>(document.getElementById("proxy_address")).value
-      = Proxy_requestor_artifacts.networks[network].address
+    web.reload_or_set("proxy_address", Proxy_requestor_artifacts.networks[network].address)
+    web.reload_or_set("ipfs_multihash", "Qmd286K6pohQcTKYqnS1YhWrCiS4gz7Xi34sdwMe9USZ7u")
+    web.reload_or_set("file_length", "443230")
+    web.reload_or_set("merkle_root",
+      "0x7854cdeeb3c1372d55cabba556c98b284fd7fa7f0df8ae787807d323cd33c10b")
+    web.reload_or_set("start", "0")
+    web.reload_or_set("end", "128")
+    web.reload_or_set("value", "10")
+
+    window.onbeforeunload = () => {
+      web.save("proxy_address")
+      web.save("ipfs_multihash")
+      web.save("file_length")
+      web.save("merkle_root")
+      web.save("start")
+      web.save("end")
+      web.save("value")
+    }
   })().catch((err) => {
     throw err
   })
 })
 
 window.addEventListener("keyup", (event) => {
-  const request_container = cast<HTMLElement>(document.getElementById("request_container"))
+  const request_container = web.as_get<HTMLElement>("request_container")
   if (event.keyCode === 13 && window.getComputedStyle(request_container).visibility === "visible") {
     request()
   }
@@ -76,25 +93,24 @@ function request(): void {
       return stop_with_error(false, "Please unlock MetaMask.")
     }
 
-    const proxy_address = cast<HTMLInputElement>(document.getElementById("proxy_address")).value
+    const proxy_address = web.as_get<HTMLInputElement>("proxy_address").value
     if (proxy_address === "") {
       return stop_with_error(false, "Please specify Proxy address.")
     }
     const ipfs_hash = conversion.uint256_from_ipfs_multihash(
-      cast<HTMLInputElement>(document.getElementById("ipfs_multihash")).value)
-    const file_length = cast<HTMLInputElement>(document.getElementById("file_length")).value
-    const merkle_root = cast<HTMLInputElement>(document.getElementById("merkle_root")).value
-    const start = cast<HTMLInputElement>(document.getElementById("start")).value
-    const end = cast<HTMLInputElement>(document.getElementById("end")).value
-    const value = window.web3.toWei(cast<HTMLInputElement>(document.getElementById("value")).value,
-      "finney")
+      web.as_get<HTMLInputElement>("ipfs_multihash").value)
+    const file_length = web.as_get<HTMLInputElement>("file_length").value
+    const merkle_root = web.as_get<HTMLInputElement>("merkle_root").value
+    const start = web.as_get<HTMLInputElement>("start").value
+    const end = web.as_get<HTMLInputElement>("end").value
+    const value = window.web3.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
 
     hex = ""
     ascii = []
     redisplay()
 
-    show("request_container", false)
-    show("cancel_container", true)
+    web.show("request_container", false)
+    web.show("cancel_container", true)
 
     /* tslint:disable variable-name */
     const Proxy_requestor = window.web3.eth.contract(Proxy_requestor_artifacts.abi)
@@ -162,7 +178,7 @@ function request(): void {
                     hex = data.toString("hex").split("").map((x, i) => i % 2 === 0 ? x : x + " ")
                       .join("")
                     ascii = new Buffer(data.map((x) => x < 32 || x > 126 ? 46 /* '.' */ : x))
-                      .toString("ascii").split("").map(escape)
+                      .toString("ascii").split("").map(web.escape_char)
                     redisplay()
                     stop()
                     return true
@@ -188,14 +204,14 @@ function request(): void {
 /*====================================================================================================*/
 
 function redisplay(): void {
-  const hex_elt = cast<HTMLSpanElement>(document.getElementById("hex"))
-  const ascii_elt = cast<HTMLSpanElement>(document.getElementById("ascii"))
+  const hex_elt = web.as_get<HTMLSpanElement>("hex")
+  const ascii_elt = web.as_get<HTMLSpanElement>("ascii")
   hex_elt.innerHTML = ""
   ascii_elt.innerHTML = ""
   let cols = 0
   for (let start = 0; start < ascii.length; start += cols) {
     if (start === 0) {
-      const ascii_container = cast<HTMLDivElement>(document.getElementById("ascii_container"))
+      const ascii_container = web.as_get<HTMLDivElement>("ascii_container")
       const width = ascii_container.clientWidth
       while (cols < ascii.length && ascii_elt.offsetWidth <= width) {
         ascii_elt.innerHTML += ascii[cols]
@@ -231,33 +247,11 @@ function stop(): void {
       await filter.stopWatching()
     }
 
-    show("cancel_container", false)
-    show("request_container", true)
+    web.show("cancel_container", false)
+    web.show("request_container", true)
   })().catch((err) => {
     throw err
   })
-}
-
-/*====================================================================================================*/
-
-function cast<T>(x: any): T { return x as T }
-
-/*====================================================================================================*/
-
-function show(id: string, visible: boolean): void {
-  cast<HTMLElement>(document.getElementById(id)).style.visibility = visible ? "visible" : "hidden"
-}
-
-/*====================================================================================================*/
-
-function escape(x: string): string {
-  switch (x) {
-    case " ": return "&nbsp;"
-    case "&": return "&amp;"
-    case "<": return "&lt;"
-    case ">": return "&gt;"
-    default:  return x
-  }
 }
 
 /*====================================================================================================*/

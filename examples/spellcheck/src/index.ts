@@ -9,6 +9,7 @@ import * as conversion from "../../../common/conversion"
 import * as eth from "../../../common/eth"
 import { guard as eib_guard } from "../../../common/guard"
 import * as math from "../../../common/math"
+import * as web from "../../../common/web"
 import { guard as sc_guard } from "./guard"
 import * as sc_interfaces from "./interfaces"
 
@@ -61,7 +62,8 @@ window.addEventListener("load", () => {
     /* tslint:enable variable-name */
 
     if (Object.keys(Spellcheck_artifacts.networks).length !== 1) {
-      throw new Error("Internal error: Unexpected number of networks.")
+      return stop_with_error(true,
+        "Unexpected number of networks (did you remember to deploy Spellcheck?).")
     }
     const network = Object.keys(Spellcheck_artifacts.networks)[0]
     window.sc_address = Spellcheck_artifacts.networks[network].address
@@ -81,9 +83,9 @@ window.addEventListener("load", () => {
     const ipfs_multihash = conversion.ipfs_multihash_from_uint256(file_addr[0])
     const gas = math.ceil_div_big(file_addr[1], new BigNumber(32)).times(eth.G_SSET)
 
-    set_text("ipfs_multihash", ipfs_multihash)
-    set_text("file_length", file_addr[1].toString())
-    set_text("file_gas", gas.toString())
+    web.set_text("ipfs_multihash", ipfs_multihash)
+    web.set_text("file_length", file_addr[1].toString())
+    web.set_text("file_gas", gas.toString())
 
     const request = new XMLHttpRequest()
     request.onreadystatechange = () => {
@@ -91,18 +93,26 @@ window.addEventListener("load", () => {
         return
       }
       const safe_low = JSON.parse(request.responseText).safeLow
-      set_text("gas_rate", (safe_low / 10).toString())
-      set_text("file_ether", gas.times(safe_low).dividedBy("10000000000").toString())
+      web.set_text("gas_rate", (safe_low / 10).toString())
+      web.set_text("file_ether", gas.times(safe_low).dividedBy("10e9").toString())
     }
     request.open("GET", "https://ethgasstation.info/json/ethgasAPI.json", true)
     request.send()
+
+    web.reload_or_set("word", "seigniorage")
+    web.reload_or_set("value", "10")
+
+    window.onbeforeunload = () => {
+      web.save("word")
+      web.save("value")
+    }
   })().catch((err) => {
     throw err
   })
 })
 
 window.addEventListener("keyup", (event) => {
-  const spellcheck_container = cast<HTMLElement>(document.getElementById("spellcheck_container"))
+  const spellcheck_container = web.as_get<HTMLElement>("spellcheck_container")
   if (event.keyCode === 13 && window.getComputedStyle(spellcheck_container).visibility === "visible") {
     spellcheck()
   }
@@ -117,34 +127,33 @@ function spellcheck(): void {
       return stop_with_error(false, "Please unlock MetaMask.")
     }
 
-    const word = cast<HTMLInputElement>(document.getElementById("word")).value
+    const word = web.as_get<HTMLInputElement>("word").value
     if (word === "") {
       return stop_with_error(false, "Please specify a word.")
     }
-    const value = window.web3.toWei(cast<HTMLInputElement>(document.getElementById("value")).value,
-      "finney")
+    const value = window.web3.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
 
-    show("checking_message", false)
-    show("valid_message", false)
-    show("invalid_message", false)
-    show("gas_used_container", false)
-    show("value_used_container", false)
-    show("value_refunded_container", false)
+    web.show("checking_message", false)
+    web.show("valid_message", false)
+    web.show("invalid_message", false)
+    web.show("gas_used_container", false)
+    web.show("value_used_container", false)
+    web.show("value_refunded_container", false)
 
-    enable("prompt_message", false)
-    enable("word_label", false)
-    enable("word", false)
-    enable("value_label", false)
-    enable("value", false)
+    web.enable("prompt_message", false)
+    web.enable("word_label", false)
+    web.enable("word", false)
+    web.enable("value_label", false)
+    web.enable("value", false)
 
-    set_text("checking_word", word)
-    set_text("valid_word", word)
-    set_text("invalid_word", word)
+    web.set_text("checking_word", word)
+    web.set_text("valid_word", word)
+    web.set_text("invalid_word", word)
 
-    show("checking_message", true)
+    web.show("checking_message", true)
 
-    show("spellcheck_container", false)
-    show("cancel_container", true)
+    web.show("spellcheck_container", false)
+    web.show("cancel_container", true)
 
     const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
     const tx_hash = await eth.promisify<string>((callback) => window.sc.spellcheck(
@@ -157,7 +166,7 @@ function spellcheck(): void {
       },
       callback
     ))
-    const found = eth.handle_receipt_events(
+    eth.handle_receipt_events(
       eth.promisify<types.TransactionReceipt | null>(
         (callback) => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
       [{
@@ -172,8 +181,7 @@ function spellcheck(): void {
               return false
             }
             gas_used = 0
-            spellcheck_handle_receipt_events(sc_init,
-              Promise.resolve(cast<types.TransactionReceipt | null>(receipt)))
+            spellcheck_handle_receipt_events(sc_init, Promise.resolve(receipt))
             return true
           }
         }]
@@ -193,7 +201,7 @@ function spellcheck(): void {
 
 function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init,
     promised_receipt: Promise<types.TransactionReceipt | null>): void {
-  const found = eth.handle_receipt_events(
+  eth.handle_receipt_events(
     promised_receipt,
     [{
       abi: window.sc.abi,
@@ -229,8 +237,7 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
                           if (!request.req_id.equals(supplement.req_id)) {
                             return false
                           }
-                          spellcheck_handle_receipt_events(sc_init,
-                            Promise.resolve(cast<types.TransactionReceipt | null>(receipt)))
+                          spellcheck_handle_receipt_events(sc_init, Promise.resolve(receipt))
                           return true
                         }
                       }]
@@ -256,11 +263,11 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
             return false
           }
           update_gas_used(receipt)
-          show("checking_message", false)
-          show(sc_end.valid ? "valid_message" : "invalid_message", true)
+          web.show("checking_message", false)
+          web.show(sc_end.valid ? "valid_message" : "invalid_message", true)
           const value_used = sc_init.value.minus(sc_end.unspent_value)
-          set_text("value_used", window.web3.fromWei(value_used, "finney").toString())
-          show("value_used_container", true)
+          web.set_text("value_used", window.web3.fromWei(value_used, "finney").toString())
+          web.show("value_used_container", true)
           if (!sc_end.unspent_value.isZero()) {
             refund(sc_init)
           }
@@ -280,8 +287,8 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
 
 function update_gas_used(receipt: types.TransactionReceipt): void {
   gas_used += receipt.gasUsed
-  set_text("gas_used", gas_used.toString())
-  show("gas_used_container", true)
+  web.set_text("gas_used", gas_used.toString())
+  web.show("gas_used_container", true)
 }
 
 /*====================================================================================================*/
@@ -309,8 +316,8 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): void {
             if (!sc_init.sc_id.equals(sc_refund.sc_id)) {
               return false
             }
-            set_text("value_refunded", window.web3.fromWei(sc_refund.value, "finney").toString())
-            show("value_refunded_container", true)
+            web.set_text("value_refunded", window.web3.fromWei(sc_refund.value, "finney").toString())
+            web.show("value_refunded_container", true)
             stop()
             return true
           }
@@ -342,61 +349,19 @@ function stop(): void {
       await filter.stopWatching()
     }
 
-    show("checking_message", false)
+    web.show("checking_message", false)
 
-    enable("prompt_message", true)
-    enable("word_label", true)
-    enable("word", true)
-    enable("value_label", true)
-    enable("value", true)
+    web.enable("prompt_message", true)
+    web.enable("word_label", true)
+    web.enable("word", true)
+    web.enable("value_label", true)
+    web.enable("value", true)
 
-    show("cancel_container", false)
-    show("spellcheck_container", true)
+    web.show("cancel_container", false)
+    web.show("spellcheck_container", true)
   })().catch((err) => {
     throw err
   })
-}
-
-/*====================================================================================================*/
-
-function cast<T>(x: any): T { return x as T }
-
-/*====================================================================================================*/
-
-function show(id: string, visible: boolean): void {
-  cast<HTMLElement>(document.getElementById(id)).style.visibility = visible ? "visible" : "hidden"
-}
-
-/*====================================================================================================*/
-
-function enable(id: string, enabled: boolean): void {
-  const element = cast<HTMLElement>(document.getElementById(id))
-  switch (element.tagName) {
-    case "INPUT":
-      cast<HTMLInputElement>(element).disabled = !enabled
-      break
-    default:
-      element.style.color = enabled ? "initial" : "gray"
-      break
-  }
-}
-
-/*====================================================================================================*/
-
-function set_text(id: string, value: string): void {
-  cast<HTMLElement>(document.getElementById(id)).innerHTML = value.split("").map(escape).join("")
-}
-
-/*====================================================================================================*/
-
-function escape(x: string): string {
-  switch (x) {
-    case " ": return "&nbsp;"
-    case "&": return "&amp;"
-    case "<": return "&lt;"
-    case ">": return "&gt;"
-    default:  return x
-  }
 }
 
 /*====================================================================================================*/
