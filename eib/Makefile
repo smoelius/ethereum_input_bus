@@ -23,9 +23,6 @@ compile: build/contracts/Input_bus.json \
 
 build/contracts/Input_bus.json: contracts/Input_bus.sol
 	truffle compile
-	@# smoelius: The next tests are expensive.  So perform them immediately after
-	@# build/contracts/Input_bus.json is built, but at no other time.
-	@# $(MAKE) check
 
 build/contracts/%.json: contracts/%.sol
 	truffle compile

@@ -4,7 +4,7 @@
 
 WEBPACKFLAGS := --mode=development
 
-.PHONY: all deploy pre_tsc compile post_tsc test clobber clean
+.PHONY: all deploy pre_tsc compile post_tsc check test clobber clean
 
 #======================================================================================================#
 
@@ -50,6 +50,8 @@ words.sorted: words-3.0-22.el7.noarch.rpm
 
 words-3.0-22.el7.noarch.rpm:
 	wget 'https://rpmfind.net/linux/centos/7.5.1804/os/x86_64/Packages/$@'
+
+check:
 
 test:
 	mocha

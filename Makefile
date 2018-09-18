@@ -58,6 +58,9 @@ lint:
 	-tslint --project tsconfig.json | grep -w 'falsy'
 
 check: check_simulation_overhead
+	$(MAKE) -C eib $@
+	$(MAKE) -C eibs_ts $@
+	$(MAKE) -C examples $@
 
 check_simulation_overhead: eib/Input_bus_opcodes.txt eib/build/contracts/Input_bus.json
 	grep "\<UNSUPPLY_SELECTION_GAS_COST = $$( (cd eib && truffle opcode Input_bus) \

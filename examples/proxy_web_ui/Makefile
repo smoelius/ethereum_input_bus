@@ -4,7 +4,7 @@
 
 WEBPACKFLAGS := --mode=development
 
-.PHONY: all pre_tsc post_tsc clean
+.PHONY: all pre_tsc post_tsc check clean
 
 #======================================================================================================#
 
@@ -22,6 +22,8 @@ Input_bus_artifacts.js: build/contracts/Input_bus.json
 
 Proxy_requestor_artifacts.js: build/contracts/Proxy_requestor.json
 	(echo -n "Proxy_requestor_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
+
+check:
 
 clean:
 	rm -f dist/main.js

@@ -2,7 +2,7 @@
 # Makefile for prototype Ethereum Input Bus supplier implemented in TypeScript
 #======================================================================================================#
 
-.PHONY: all pre_tsc post_tsc run test clean
+.PHONY: all pre_tsc post_tsc check run test clean
 
 #======================================================================================================#
 
@@ -12,11 +12,13 @@ pre_tsc:
 
 post_tsc:
 
-run:
-	node src/index.js
+check:
 
 test:
 	mocha
+
+run:
+	node src/index.js
 
 clean:
 	rm -f disk_cache/*
