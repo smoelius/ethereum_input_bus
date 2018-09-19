@@ -12,6 +12,7 @@ import IPFS from "ipfs"
 import minimist from "minimist"
 import Web3 from "web3"
 import * as common from "../../common"
+import { guard } from "./guard"
 import * as interfaces from "./interfaces"
 
 // From: http://mikemcl.github.io/bignumber.js/
@@ -51,18 +52,18 @@ log("eibs started.")
 
 set_working_directory()
 
-const config = configure()
+const preconfig = preconfigure()
 
 const node = new IPFS({})
 
 const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 
-if (config.build_path === undefined) {
-  config.build_path = "build"
-  log("build path unspecified---using '%s'.", config.build_path)
+if (preconfig.build_path === undefined) {
+  preconfig.build_path = "build"
+  log("build path unspecified---using '%s'.", preconfig.build_path)
 }
 
-const path = config.build_path + "/contracts/Input_bus.json"
+const path = preconfig.build_path + "/contracts/Input_bus.json"
 log("reading artifacts from '%s'.", path)
 /* tslint:disable variable-name */
 const Input_bus_artifacts = JSON.parse(fs.readFileSync(path).toString())
@@ -70,53 +71,64 @@ const Input_bus = web3.eth.contract(Input_bus_artifacts.abi)
 /* tslint:enable variable-name */
 log("'%s' read.", path)
 
-let eib: Web3.ContractInstance
-if (config.eib_address === undefined) {
+if (preconfig.eib_address === undefined) {
   assert(Object.keys(Input_bus_artifacts.networks).length === 1)
   const network = Object.keys(Input_bus_artifacts.networks)[0]
-  eib = Input_bus.at(Input_bus_artifacts.networks[network].address)
-  log("eib address unspecified---using %s from artifacts.", eib.address)
-} else {
-  eib = Input_bus.at(config.eib_address)
+  preconfig.eib_address = Input_bus_artifacts.networks[network].address
+  log("eib address unspecified---using %s from artifacts.", preconfig.eib_address)
 }
 
-if (config.self_address === undefined) {
+const eib = Input_bus.at(preconfig.eib_address || "")
+
+if (preconfig.self_address === undefined) {
   assert(web3.eth.accounts.length >= 1)
-  config.self_address = web3.eth.defaultAccount = web3.eth.accounts[0]
-  log("self address unspecified---using '%s'.", config.self_address)
+  preconfig.self_address = web3.eth.defaultAccount = web3.eth.accounts[0]
+  log("self address unspecified---using '%s'.", preconfig.self_address)
 }
 
-if (config.debug_flag && config.payee_address === undefined) {
-  assert(web3.eth.accounts.length >= 2)
-  config.payee_address = web3.eth.defaultAccount = web3.eth.accounts[1]
-  log("payee address unspecified---using '%s'.", config.payee_address)
+if (preconfig.payee_address === undefined) {
+  if (!preconfig.debug_flag) {
+    preconfig.payee_address = null
+  } else {
+    assert(web3.eth.accounts.length >= 2)
+    preconfig.payee_address = web3.eth.defaultAccount = web3.eth.accounts[1]
+    log("payee address unspecified---using '%s'.", preconfig.payee_address)
+  }
 }
 
-if (config.calibration === undefined) {
-  config.calibration = DEFAULT_CALIBRATION
-  log("gas estimation parameters unspecified---using %s.", JSON.stringify(config.calibration))
+if (preconfig.calibration === undefined) {
+  preconfig.calibration = DEFAULT_CALIBRATION
+  log("gas estimation parameters unspecified---using %s.", JSON.stringify(preconfig.calibration))
 }
 
-if (config.gas_cap_adjustment === undefined) {
-  config.gas_cap_adjustment = DEFAULT_GAS_CAP_ADJUSTMENT
-  log("gas cap adjustment unspecified---using %f.", config.gas_cap_adjustment)
+if (preconfig.gas_cap_adjustment === undefined) {
+  preconfig.gas_cap_adjustment = DEFAULT_GAS_CAP_ADJUSTMENT
+  log("gas cap adjustment unspecified---using %f.", preconfig.gas_cap_adjustment)
 }
 
-if (config.profit === undefined) {
-  config.profit = DEFAULT_PROFIT
-  log("profit unspecified---using %d.", config.profit)
+if (preconfig.profit === undefined) {
+  preconfig.profit = DEFAULT_PROFIT
+  log("profit unspecified---using %d.", preconfig.profit)
 }
 
-if (config.disk_cache_path !== undefined) {
-  if (!fs.statSync(config.disk_cache_path).isDirectory()) {
-    throw new Error("'" + config.disk_cache_path + "' is not a directory")
+if (preconfig.disk_cache_path === undefined) {
+  preconfig.disk_cache_path = null
+} else {
+  if (!fs.statSync(preconfig.disk_cache_path || "").isDirectory()) {
+    throw new Error("'" + preconfig.disk_cache_path + "' is not a directory")
   }
   try {
-    fs.accessSync(config.disk_cache_path, fs.constants.W_OK)
+    fs.accessSync(preconfig.disk_cache_path || "", fs.constants.W_OK)
   } catch (err) {
-    throw new Error("'" + config.disk_cache_path + "' is not writable")
+    throw new Error("'" + preconfig.disk_cache_path + "' is not writable")
   }
 }
+
+preconfig.debug_flag = preconfig.debug_flag || false
+preconfig.model_flag = preconfig.model_flag || false
+preconfig.mem_cache_flag = preconfig.mem_cache_flag || false
+
+const config = guard.Configuration(preconfig)
 
 const mem_cache: { [key: string]: common.File_info; } = {}
 
@@ -140,7 +152,7 @@ node.on("ready", () => {
           let data_length: number
           let proof_length: number
           let supply_gas_estimate: number
-          if (config.model) {
+          if (config.model_flag) {
             data_length = common.calculate_data_length(request.file_addr[1].toNumber(),
               request.start.toNumber(), request.end.toNumber())
             proof_length = common.calculate_proof_length(request.start.toNumber(),
@@ -207,7 +219,7 @@ node.on("ready", () => {
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
             supplement.callback_gas_start.minus(supplement.callback_gas_end).toNumber())
-          if (config.payee_address !== undefined
+          if (config.payee_address
               && new BigNumber(supplement.supplier).equals(config.self_address || "")) {
             log("paying-out request %d...", supplement.req_id)
             try {
@@ -333,7 +345,7 @@ function mem_cache_file_handler(ipfs_hash: string,
 function disk_cache_file_handler(ipfs_hash: string,
       file_info_callback: (file: Buffer, file_info: common.File_info) => void):
     (err: NodeJS.ErrnoException, file: any) => void {
-  if (config.disk_cache_path === undefined) {
+  if (!config.disk_cache_path) {
     return generic_file_handler(ipfs_hash, file_info_callback)
   } else {
     return (err, file) => {
@@ -415,12 +427,12 @@ function set_working_directory(): void {
 
 /*====================================================================================================*/
 
-function configure(): interfaces.Configuration {
-  let preconfig: any = {}
+function preconfigure(): interfaces.Preconfiguration {
+  let file_config: any = {}
 
   log("reading local file '%s'...", EIBS_CONFIG)
   try {
-    preconfig = JSON.parse(fs.readFileSync(EIBS_CONFIG).toString())
+    file_config = JSON.parse(fs.readFileSync(EIBS_CONFIG).toString())
     log("'%s' read.", EIBS_CONFIG)
   } catch (err) {
     if (err.code === "ENOENT") {
@@ -430,27 +442,27 @@ function configure(): interfaces.Configuration {
     }
   }
 
-  const args = minimist(process.argv.slice(2), {
+  const arg_config = minimist(process.argv.slice(2), {
     boolean: ["debug", "model", "mem-cache"],
     string: ["build", "eib", "self", "payee", "calibrate", "gas-cap-adjustment", "profit", "disk-cache"]
   })
 
-  if (args.hasOwnProperty("calibrate")) {
-    args.calibrate = JSON.parse(args.calibrate)
+  if (arg_config.hasOwnProperty("calibrate")) {
+    arg_config.calibrate = JSON.parse(arg_config.calibrate)
   }
 
-  preconfig = Object.assign(preconfig, delete_false_properties(args))
+  const external_config = Object.assign(file_config, delete_false_properties(arg_config))
 
-  const config: interfaces.Configuration = {}
+  const preconfig: interfaces.Preconfiguration = {}
 
-  for (const key in preconfig) {
+  for (const key in external_config) {
     switch (key) {
       case "_":
-        switch (preconfig[key].length) {
+        switch (external_config[key].length) {
           case 0:
             break
           default:
-            common.fail("extraneous argument: %s", preconfig[key][0])
+            common.fail("extraneous argument: %s", external_config[key][0])
             break
         }
         break
@@ -458,40 +470,40 @@ function configure(): interfaces.Configuration {
         usage(0)
         break
       case "debug":
-        config.debug_flag = preconfig[key]
+        preconfig.debug_flag = external_config[key]
         break
       case "build":
-        config.build_path = preconfig[key]
+        preconfig.build_path = external_config[key]
         break
       case "eib":
-        config.eib_address = preconfig[key]
+        preconfig.eib_address = external_config[key]
         break
       case "self":
-        config.self_address = preconfig[key]
+        preconfig.self_address = external_config[key]
         break
       case "payee":
-        config.payee_address = preconfig[key]
+        preconfig.payee_address = external_config[key]
         break
       case "model":
-        config.model = preconfig[key]
+        preconfig.model_flag = external_config[key]
         break
       case "calibrate":
-        config.calibration = preconfig[key]
-        if ((config.calibration || []).length !== 3) {
-          common.fail("illegal argument to calibrate: %s", JSON.stringify(config.calibration))
+        preconfig.calibration = external_config[key]
+        if ((preconfig.calibration || []).length !== 3) {
+          common.fail("illegal argument to calibrate: %s", JSON.stringify(preconfig.calibration))
         }
         break
       case "gas-cap-adjustment":
-        config.gas_cap_adjustment = Number(preconfig[key])
+        preconfig.gas_cap_adjustment = Number(external_config[key])
         break
       case "profit":
-        config.profit = Number(preconfig[key])
+        preconfig.profit = Number(external_config[key])
         break
       case "disk-cache":
-        config.disk_cache_path = preconfig[key]
+        preconfig.disk_cache_path = external_config[key]
         break
       case "mem-cache":
-        config.mem_cache_flag = preconfig[key]
+        preconfig.mem_cache_flag = external_config[key]
         break
       default:
         common.warnx("unrecognized option: %s", key)
@@ -500,7 +512,7 @@ function configure(): interfaces.Configuration {
     }
   }
 
-  return config
+  return preconfig
 }
 
 /*====================================================================================================*/
