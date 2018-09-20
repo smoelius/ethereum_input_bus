@@ -19,7 +19,7 @@ contract Spellcheck {
   
   byte constant NEWLINE = 0xa;
   
-  uint constant CALLBACK_GAS = 300000;
+  uint constant CALLBACK_GAS = 400000;
   
   /*==================================================================================================*
    * Datatypes
@@ -147,7 +147,7 @@ contract Spellcheck {
       return;
     }
     
-    uint256[3] memory file_addr = Dict.file_addr();
+    uint256[] memory file_addr = Dict.file_addr();
     uint longest_word_length = Dict.longest_word_length();
     uint max_length = 2 * (longest_word_length + 1);
     

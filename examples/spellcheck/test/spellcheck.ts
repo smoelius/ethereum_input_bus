@@ -14,8 +14,8 @@ import { guard as sc_guard } from "../src/guard"
 
 const VERBOSE = true
 
-const SPELLCHECK_GAS = 500000
-const REFUND_GAS = 300000
+const SPELLCHECK_GAS = 600000
+const REFUND_GAS     = 300000
 
 /*====================================================================================================*/
 

@@ -31,7 +31,7 @@ const DEFAULT_PROFIT = 2 // percent
 const SUPPLY_SELECTOR = common.selector("supply(uint256,uint256,uint256[],uint256[])")
 const UNSUPPLY_SELECTOR = common.selector("unsupply(uint256)")
 
-const UNSUPPLY_SELECTION_GAS_COST = 361
+const UNSUPPLY_SELECTION_GAS_COST = 427
 const UNSUPPLY_INTRO_GAS_COST = 63 + common.C_JUMP
 const UNSUPPLY_MAIN_GAS_COST = 40913 + common.C_JUMPDEST + 2 * common.G_SHA3WORD
   - common.G_SSET + common.G_SRESET - common.R_SCLEAR
@@ -42,7 +42,7 @@ const UNSUPPLY_MEMORY_GAS_COST = 3 * common.G_MEMORY
 const UNSUPPLY_GAS_COST = UNSUPPLY_SELECTION_GAS_COST + UNSUPPLY_INTRO_GAS_COST + UNSUPPLY_MAIN_GAS_COST
   + UNSUPPLY_MEMORY_GAS_COST
 
-const PAYOUT_GAS = 300000
+const PAYOUT_GAS = 200000
 
 /*====================================================================================================*/
 

@@ -52,7 +52,7 @@ contract Proxy_requestor {
   function request(
       uint256 _flags,
       Input_bus.file_address_type _file_addr_type,
-      uint256[3] _file_addr,
+      uint256[] _file_addr,
       uint128 _first,
       uint128 _last,
       uint _ltiov,

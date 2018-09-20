@@ -12,18 +12,15 @@ contract Input_bus {
    * Constants
    *==================================================================================================*/
   
-  uint public constant N_FILE_ADDRESS_WORDS = 3;
-    // IPFS SHA-256 hash
-    // file length
-    // Keccak-256 Merkle root
-  
   enum file_address_type {
     IPFS_WITH_KECCAK256_MERKLE_ROOT
   }
   
-  uint public constant IPFSKEC256_IPFS_HASH = 0;
-  uint public constant IPFSKEC256_FILE_LENGTH = 1;
-  uint public constant IPFSKEC256_MERKLE_ROOT = 2;
+  uint public constant N_WORDS_IPFSKEC256 = 3;
+  
+  uint public constant IPFSKEC256_IPFS_HASH   = 0; // IPFS SHA-256 hash
+  uint public constant IPFSKEC256_FILE_LENGTH = 1; // file length
+  uint public constant IPFSKEC256_MERKLE_ROOT = 2; // Keccak-256 Merkle root
   
   uint constant UNSUPPLY_REQ_ID = 0;
   
@@ -45,7 +42,7 @@ contract Input_bus {
     uint256 flags;    // unused (future-proofing)
     address requestor;
     file_address_type file_addr_type;
-    uint256[N_FILE_ADDRESS_WORDS] file_addr;
+    uint256[] file_addr;
     uint128 start;
     uint128 end;
     uint ltiov;       // latest time information of value; 0 (meaning no limit) or a block number
@@ -95,7 +92,7 @@ contract Input_bus {
     uint req_id,
     address requestor,
     file_address_type file_addr_type,
-    uint256[N_FILE_ADDRESS_WORDS] file_addr,
+    uint256[] file_addr,
     uint128 start,
     uint128 end,
     uint ltiov,
@@ -126,10 +123,12 @@ contract Input_bus {
   function initialize() public {
     require(msg.sender == owner);
     
+    uint256[] memory file_addr = new uint256[](3);
+    
     require(UNSUPPLY_REQ_ID == this.request(
       0,                                                 // _flags,
       file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT, // _file_addr_type,
-      [ uint256(0), 0, 0 ],                              // file_addr ([0, 0, 0] is meaningless)
+      file_addr,                                         // file_addr
       0,                                                 // _start,
       0,                                                 // _end,
       0,                                                 // _ltiov,
@@ -163,7 +162,7 @@ contract Input_bus {
   // uint256 flags;
   // address requestor;
   // file_address_type file_addr_type;
-  // uint256[N_FILE_ADDRESS_WORDS] file_addr;
+  // uint256[] file_addr;
   // uint128 start;
   // uint128 end;
   // uint ltiov;
@@ -196,7 +195,7 @@ contract Input_bus {
   function request(
       uint256 _flags,
       file_address_type _file_addr_type,
-      uint256[N_FILE_ADDRESS_WORDS] _file_addr,
+      uint256[] _file_addr,
       uint128 _start,
       uint128 _end,
       uint _ltiov,
@@ -206,13 +205,15 @@ contract Input_bus {
     require(initialized || msg.sender == address(this));
     require(mask_left(_flags, 256 - N_REQUEST_FLAGS) == 0);
     require(_file_addr_type == file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT);
+    require(_file_addr.length == N_WORDS_IPFSKEC256);
     require(_end <= _file_addr[IPFSKEC256_FILE_LENGTH]);
     require(_start <= _end);
     
     Request storage req = reqs[next_req_id];
     req.requestor = msg.sender;
     req.file_addr_type = _file_addr_type;
-    for (uint i = 0; i < N_FILE_ADDRESS_WORDS; i++) {
+    req.file_addr = new uint256[](N_WORDS_IPFSKEC256);
+    for (uint i = 0; i < N_WORDS_IPFSKEC256; i++) {
       req.file_addr[i] = _file_addr[i];
     }
     req.start = _start;
@@ -315,6 +316,11 @@ contract Input_bus {
       callback_result
     );
     
+    // smoelius: The next two deletes are a stop-gap measure until I can find a better way of
+    // communicating the data and proof to the callback.
+    delete req.data;
+    delete req.proof;
+    
     // smoelius: Use assembly to ensure that the path between the GAS and RETURN instructions is
     // straight-line code.
     
@@ -340,13 +346,14 @@ contract Input_bus {
   
   function validate_data_proof(
       file_address_type _file_addr_type,
-      uint256[N_FILE_ADDRESS_WORDS] _file_addr,
+      uint256[] _file_addr,
       uint128 _start,
       uint128 _end,
       uint256[] _data,
       uint256[] _proof
   ) internal view {
     assert(_file_addr_type == file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT);
+    assert(_file_addr.length == N_WORDS_IPFSKEC256);
     uint128 file_length = uint128(_file_addr[IPFSKEC256_FILE_LENGTH]);
     assert(_end <= file_length);
     assert(_start <= _end);
