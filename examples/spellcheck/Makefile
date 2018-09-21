@@ -10,7 +10,9 @@ WEBPACKFLAGS := --mode=development
 
 all: pre_tsc post_tsc
 
-deploy:
+# smoelius: deploy requires that Dict.sol be generated.  (Since deploy will overwrite *.json, there is
+# likely a better way to organize this Makefile.)
+deploy: Dict.sol
 	truffle deploy
 
 # smoelius: Note that "compile" cannot be a pre_tsc dependency because the contents of the util
@@ -43,7 +45,7 @@ build/contracts/Dict.json: Dict.sol
 	truffle compile
 
 Dict.sol: words.sorted
-	./generate_dict_sol.sh $< > $@
+	./generate_dict_sol.sh $< > $@ || (rm -f $@ && false)
 
 words.sorted: words-3.0-22.el7.noarch.rpm
 	rpm2cpio $< | cpio -i --to-stdout ./usr/share/dict/linux.words | LC_ALL=C sort > $@
