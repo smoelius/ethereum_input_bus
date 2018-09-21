@@ -7,16 +7,15 @@ donation to 0xD07C0Bb4B0E5943cbeD93c337686217D91655a2e.
 
 
 Contents
-1. [Description](#user-content-description)
-2. [Terminology](#user-content-terminology)
-3. [Repository contents](#user-content-repository-contents)
-4. [Prerequisites](#user-content-prerequisites)
-5. [Building](#user-content-building)
-6. [Testing](#user-content-testing)
-7. [Reporting bugs](#user-content-reporting-bugs)
+1. [Introduction](#user-content-introduction)
+2. [Repository contents](#user-content-repository-contents)
+3. [How EIB works](#user-content-how-eib-works)
+4. [Building](#user-content-building)
+5. [Testing](#user-content-testing)
+6. [Reporting bugs](#user-content-reporting-bugs)
 
 
-## Description
+## Introduction
 
 Ethereum Input Bus (EIB) provides a means for moving data onto the Ethereuem blockchain securely.
 
@@ -24,11 +23,6 @@ More specifically, EIB allows an Ethereum contract to crowd-source a read from t
 System ([IPFS](https://ipfs.io/)), and for a respondent to supply the data and prove that the data is
 correct, i.e., the data comes from the correct file, the data comes from the correct offset within that
 file, and the data is of the correct length.
-
-
-## Terminology
-
-TODO.
 
 
 ## Repository contents
@@ -44,7 +38,35 @@ The EIB repository consists of (TODO: link to READMEs):
   * utilities for working with EIB.
 
 
-## Prerequisites
+## How EIB works
+
+![](doc/overview.png)
+
+  * (1) A contract requests data from `eib` by calling `request`.
+
+  * (2) `eib` emits a `Request_announced` event.
+
+  * (3) A supplier (e.g., `eibs`) notices the event and obtains the relevant file from IPFS.
+
+  * (4) The supplier extracts the requested data and sends it to `eib` by calling `supply`.
+
+  * (5) `eib` verifies the data (see below) and notifies the requesting contract via a callback.
+
+The call to `request` includes the root of a [Merkle tree](https://en.wikipedia.org/wiki/Merkle_tree)
+whose leaves hold the contents of the IPFS file.  Along with the data, the supplier must send the
+combined paths from the relevant leaves of this tree to its root.  In this way, the supplier *proves*
+that the data is correct.  Put another way, this requirement ensures that `eib` is not fooled by a
+cheating supplier who sends bogus data.
+
+The call to `request` also includes the amount of Ether that the requestor is willing to pay for the
+read.  The supplier uses some fraction of this Ether to fund the gas for the requestor's callback.  The
+supplier keeps the remaining fraction as profit.  `eib` does **not** keep any fraction of this Ether
+for itself.
+
+A requestor can cancel its request at any time before the data has been supplied.
+
+
+## Building
 
 Building EIB requires that the following NPM packages be installed globally:
 
@@ -64,11 +86,7 @@ The above packages can be installed with the following command:
 
     npm install -g ipfs mocha truffle ts-interface-builder typescript webpack
 
-
-## Building
-
-Having verified that the above prerequisites are installed, one should be able to build EIB by simply
-typing `make`.
+With the above packages installed, one should be able to build EIB by simply typing `make`.
 
 Note that running the [examples](examples/README.md) also requires that
 [Ganache](https://truffleframework.com/ganache) and [Metamask](https://metamask.io/) be installed.
