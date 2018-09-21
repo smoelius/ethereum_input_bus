@@ -11,6 +11,7 @@
     "interface-name": false,
     "max-line-length": [true, 104],
     // "no-any": true,
+    "no-bitwise": false,
     "no-console": false,
     "no-shadowed-variable": false,
     "no-string-literal": false,

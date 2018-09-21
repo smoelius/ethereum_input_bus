@@ -22,6 +22,12 @@ contract Input_bus {
   uint public constant IPFSKEC256_FILE_LENGTH = 1; // file length
   uint public constant IPFSKEC256_MERKLE_ROOT = 2; // Keccak-256 Merkle root
   
+  uint256 public constant FLAGS_NONE = 0;
+  
+  uint public constant LTIOV_NONE = 0;
+  
+  address public constant PAYEE_DEFAULT = 0;
+  
   uint constant UNSUPPLY_REQ_ID = 0;
   
   uint constant G_JUMPDEST = 1;
@@ -34,9 +40,7 @@ contract Input_bus {
    * Datatypes
    *==================================================================================================*/
   
-  // uint constant FLAG_STRUCT_CANCELED = 0;
-  // uint constant FLAG_STRUCT_PAIDOUT = 1;
-  uint constant N_STRUCT_FLAGS = 0;
+  uint constant N_FLAGS_STRUCT = 0;
   
   struct Request {
     uint256 flags;    // unused (future-proofing)
@@ -126,12 +130,12 @@ contract Input_bus {
     uint256[] memory file_addr = new uint256[](3);
     
     require(UNSUPPLY_REQ_ID == this.request(
-      0,                                                 // _flags,
+      FLAGS_NONE,                                        // _flags,
       file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT, // _file_addr_type,
       file_addr,                                         // file_addr
       0,                                                 // _start,
       0,                                                 // _end,
-      0,                                                 // _ltiov,
+      LTIOV_NONE,                                        // _ltiov,
       this.unsupply.selector,                            // _callback_id
       20000                                              // _callback_gas
     ));
@@ -190,7 +194,7 @@ contract Input_bus {
   
   /*==================================================================================================*/
   
-  uint constant N_REQUEST_FLAGS = 0;
+  uint constant N_FLAGS_REQUEST = 0;
   
   function request(
       uint256 _flags,
@@ -203,7 +207,7 @@ contract Input_bus {
       uint256 _callback_gas
   ) public payable returns(uint) {
     require(initialized || msg.sender == address(this));
-    require(mask_left(_flags, 256 - N_REQUEST_FLAGS) == 0);
+    require(mask_left(_flags, 256 - N_FLAGS_REQUEST) == 0);
     require(_file_addr_type == file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT);
     require(_file_addr.length == N_WORDS_IPFSKEC256);
     require(_end <= _file_addr[IPFSKEC256_FILE_LENGTH]);
@@ -246,10 +250,10 @@ contract Input_bus {
   
   /*==================================================================================================*/
   
-  uint constant N_CANCEL_FLAGS = 0;
+  uint constant N_FLAGS_CANCEL = 0;
   
   function cancel(uint256 _flags, uint _req_id) public {
-    require(mask_left(_flags, 256 - N_CANCEL_FLAGS) == 0);
+    require(mask_left(_flags, 256 - N_FLAGS_CANCEL) == 0);
     
     Request storage req = reqs[_req_id];
     
@@ -271,8 +275,8 @@ contract Input_bus {
   
   /*==================================================================================================*/
   
-  uint constant FLAG_SUPPLY_SIMULATE = 0;
-  uint constant N_SUPPLY_FLAGS = 1;
+  uint constant I_FLAG_SUPPLY_SIMULATE = 0;
+  uint constant N_FLAGS_SUPPLY = 1;
   
   function supply(
       uint256 _flags,
@@ -280,7 +284,7 @@ contract Input_bus {
       uint256[] _data,
       uint256[] _proof
   ) public {
-    require(mask_left(_flags, 256 - N_SUPPLY_FLAGS) == 0);
+    require(mask_left(_flags, 256 - N_FLAGS_SUPPLY) == 0);
     
     Request storage req = reqs[_req_id];
     // smoelius: Ensure that the gas cost is the same regardless of whether FLAG_SUPPLY_SIMULATE is
@@ -292,7 +296,7 @@ contract Input_bus {
     
     validate_data_proof(req.file_addr_type, req.file_addr, req.start, req.end, _data, _proof);
     
-    require(req.ltiov == 0 || block.number <= req.ltiov);
+    require(req.ltiov == LTIOV_NONE || block.number <= req.ltiov);
     
     req.supplier = msg.sender;
     req.data = _data;
@@ -495,10 +499,10 @@ contract Input_bus {
   
   /*==================================================================================================*/
   
-  uint constant N_PAYOUT_FLAGS = 0;
+  uint constant N_FLAGS_PAYOUT = 0;
   
   function payout(uint256 _flags, uint _req_id, address _payee) public {
-    require(mask_left(_flags, 256 - N_REQUEST_FLAGS) == 0);
+    require(mask_left(_flags, 256 - N_FLAGS_PAYOUT) == 0);
     
     Request storage req = reqs[_req_id];
     
@@ -507,7 +511,7 @@ contract Input_bus {
     assert(req.requestor != 0);
     assert(req.supplier != 0);
     
-    if (_payee == 0x0) {
+    if (_payee == PAYEE_DEFAULT) {
       _payee = msg.sender;
     }
     
@@ -534,15 +538,15 @@ contract Input_bus {
     return result;
   }
   
-  function get_flag(uint256 _flags, uint _flag) internal pure returns(bool) {
-    return shift_right(_flags, _flag) % 2 != 0;
+  function get_bit(uint256 x, uint i) internal pure returns(bool) {
+    return shift_right(x, i) % 2 != 0;
   }
   
-  function set_flag(uint256 _flags, uint _flag) internal pure returns(uint256) {
-    if (!get_flag(_flags, _flag)) {
-      _flags += shift_left(1, _flag);
+  function set_bit(uint256 x, uint i) internal pure returns(uint256) {
+    if (!get_bit(x, i)) {
+      x += shift_left(1, i);
     }
-    return _flags;
+    return x;
   }
   
   function ceil_log2(uint256 x) internal pure returns(uint) {

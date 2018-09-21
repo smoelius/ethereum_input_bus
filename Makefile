@@ -16,6 +16,7 @@ TI := common/interfaces-ti.ts \
 
 SRC := $(filter-out %-ti.ts, \
          $(wildcard common/*.ts) \
+         $(wildcard eib/public/*.ts) \
          $(wildcard eib/test/*.ts) \
          $(wildcard eibs_ts/src/*.ts) \
          $(wildcard eibs_ts/test/*.ts) \
@@ -101,6 +102,7 @@ clobber: clean
 clean: tidy
 	rm -f common/*-ti.ts
 	rm -f common/*.js
+	rm -f eib/public/*.js
 	rm -f eib/test/*.js
 	rm -f eibs_ts/src/*-ti.ts
 	rm -f eibs_ts/src/*.js

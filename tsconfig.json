@@ -1,6 +1,7 @@
 {
   "include": [
     "common/*",
+    "eib/public/*",
     "eib/test/*",
     "eibs_ts/src/*",
     "eibs_ts/test/*",

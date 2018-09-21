@@ -9,6 +9,7 @@ import * as conversion from "../../../common/conversion"
 import * as eth from "../../../common/eth"
 import { guard } from "../../../common/guard"
 import * as web from "../../../common/web"
+import * as EIB from "../../../eib/public/eib"
 
 /*====================================================================================================*/
 
@@ -119,20 +120,20 @@ function request(): void {
     const proxy = Proxy_requestor.at(proxy_address)
 
     const file_addr = [
-      ipfs_hash,
-      file_length,
-      merkle_root
+      new BigNumber(ipfs_hash),
+      new BigNumber(file_length),
+      new BigNumber(merkle_root)
     ]
 
     const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
     const tx_hash = await eth.promisify<string>((callback) => proxy.request(
-      0, // no flags
-      0, // IPFS_WITH_KECCAK256_MERKLE_ROOT
+      EIB.FLAGS_NONE,
+      EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
       file_addr,
       start,
       end,
-      0, // no ltiov
-      0, // level 0
+      EIB.LTIOV_NONE,
+      EIB.PROXY_CALLBACK_ZERO,
       CALLBACK_GAS,
       {
         from: accounts[0],
@@ -152,11 +153,11 @@ function request(): void {
           callback: (event, receipt) => {
             const request = guard.Request_announced(event)
             if (!(request.requestor === proxy_address
-                && request.file_addr_type.equals(new BigNumber(0)) // smoelius: XXX: Define this.
+                && request.file_addr_type.equals(EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT)
                 && conversion.json_equals(request.file_addr, file_addr)
                 && request.start.equals(start)
                 && request.end.equals(end)
-                && request.ltiov.equals(new BigNumber(0))
+                && request.ltiov.equals(EIB.LTIOV_NONE)
                 && request.callback_gas.equals(new BigNumber(CALLBACK_GAS))
                 && request.value.equals(value))) {
               return false

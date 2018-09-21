@@ -12,6 +12,7 @@ import IPFS from "ipfs"
 import minimist from "minimist"
 import Web3 from "web3"
 import * as common from "../../common"
+import * as EIB from "../../eib/public/eib"
 import { guard } from "./guard"
 import * as interfaces from "./interfaces"
 
@@ -181,7 +182,7 @@ node.on("ready", () => {
             log("request %d gas price: %s Gwei", request.req_id, gas_price.dividedBy("10e9"))
             try {
               const receipt = web3.eth.getTransactionReceipt(eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data,
                 proof,
@@ -224,7 +225,7 @@ node.on("ready", () => {
             log("paying-out request %d...", supplement.req_id)
             try {
               eib.payout(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 supplement.req_id,
                 config.payee_address,
                 {

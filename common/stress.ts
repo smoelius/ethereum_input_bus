@@ -5,6 +5,7 @@
 import assert from "assert"
 import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
+import * as EIB from "../eib/public/eib"
 import * as conversion from "./conversion"
 import * as eth from "./eth"
 import { get_file_info } from "./file_info"
@@ -16,6 +17,8 @@ import { Test_context } from "./test"
 import { generate_test_file } from "./test_file"
 
 /*====================================================================================================*/
+
+const REQUEST_ETHER = "10e15" // 10 milliether
 
 const CALLBACK_GAS =  30000
 const REQUEST_GAS  = 300000
@@ -60,16 +63,16 @@ export function stress(context: Test_context): void {
         it(title("should announce request", start, end), (done) => {
           const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
             (callback) => context.web3.eth.getTransactionReceipt(context.proxy.request(
-              0, // no flags
-              0, // IPFS_WITH_KECCAK256_MERKLE_ROOT
+              EIB.FLAGS_NONE,
+              EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
               file_addr,
               start,
               end,
-              0, // no ltiov
-              2, // level 2
+              EIB.LTIOV_NONE,
+              EIB.PROXY_CALLBACK_TWO,
               CALLBACK_GAS,
               {
-                value: "10e15", // 10 milliether
+                value: REQUEST_ETHER,
                 gas: REQUEST_GAS
               }
             ),
@@ -99,22 +102,23 @@ export function stress(context: Test_context): void {
         if (!(context.options.external_supplier === true) && start < end) {
           assert(0 < proof.length)
           const data_length = end - start
-          const data_negated_first_bit = data.map((x, i) => i === 0 ? math.negate_bit(x, 255) : x)
+          const data_negated_first_bit = data.map((x, i) => i === 0 ? math.negate_bit_big(x, 255) : x)
           const data_negated_last_bit = data.map((x, i) => i !== Math.floor((data_length - 1) / 32) ? x
-            : math.negate_bit(x, (31 - ((data_length - 1) % 32)) * 8))
-          const proof_negated_first_bit = proof.map((x, i) => i === 0 ? math.negate_bit(x, 255) : x)
+            : math.negate_bit_big(x, (31 - ((data_length - 1) % 32)) * 8))
+          const proof_negated_first_bit = proof.map((x, i) => i === 0 ? math.negate_bit_big(x, 255) : x)
           const proof_negated_last_bit = proof.map((x, i) => i !== proof.length - 1 ? x
-            : math.negate_bit(x, 0))
-          console.log(`data:                    ${data.map((x) => x.toString(16))}`)
+            : math.negate_bit_big(x, 0))
+          /* console.log(`data:                    ${data.map((x) => x.toString(16))}`)
           console.log(`data_negated_first_bit:  ${data_negated_first_bit.map((x) => x.toString(16))}`)
           console.log(`data_negated_last_bit:   ${data_negated_last_bit.map((x) => x.toString(16))}`)
           console.log(`proof:                   ${proof.map((x) => x.toString(16))}`)
           console.log(`proof_negated_first_bit: ${proof_negated_first_bit.map((x) => x.toString(16))}`)
           console.log(`proof_negated_last_bit:  ${proof_negated_last_bit.map((x) => x.toString(16))}`)
+          */
           it(title("should fail to supply request with data first bit negated", start, end), (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data_negated_first_bit,
                 proof,
@@ -128,7 +132,7 @@ export function stress(context: Test_context): void {
           it(title("should fail to supply request with data last bit negated", start, end), (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data_negated_last_bit,
                 proof,
@@ -143,7 +147,7 @@ export function stress(context: Test_context): void {
               (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data,
                 proof_negated_first_bit,
@@ -157,7 +161,7 @@ export function stress(context: Test_context): void {
           it(title("should fail to supply request with proof last bit negated", start, end), (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data,
                 proof_negated_last_bit,
@@ -172,7 +176,7 @@ export function stress(context: Test_context): void {
               (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data_negated_first_bit,
                 proof_negated_first_bit,
@@ -187,7 +191,7 @@ export function stress(context: Test_context): void {
               (done) => {
             try {
               context.eib.supply(
-                0, // no flags
+                EIB.FLAGS_NONE,
                 request.req_id,
                 data_negated_last_bit,
                 proof_negated_last_bit,
@@ -212,7 +216,7 @@ export function stress(context: Test_context): void {
             }
           }
           context.handle_events(() => context.eib.supply(
-              0, // no flags
+              EIB.FLAGS_NONE,
               request.req_id,
               data,
               proof,
@@ -255,9 +259,9 @@ export function stress(context: Test_context): void {
         })
         it(title("should payout request", start, end), (done) => {
           context.handle_events(() => context.eib.payout(
-              0, // no flags
+              EIB.FLAGS_NONE,
               request.req_id,
-              0,  // default payee
+              EIB.PAYEE_DEFAULT,
               { gas: REQUEST_GAS }
             ),
             { fromBlock: block_number },
@@ -268,7 +272,7 @@ export function stress(context: Test_context): void {
                 callback: (event, receipt) => {
                   const payment = guard.Request_paidout(event)
                   assert(payment.req_id.equals(request.req_id))
-                  assert(payment.value.equals("10e15"))
+                  assert(payment.value.equals(REQUEST_ETHER))
                   done()
                   return true
                 }
