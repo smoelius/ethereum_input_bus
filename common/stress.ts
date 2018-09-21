@@ -19,7 +19,7 @@ import { generate_test_file } from "./test_file"
 
 const CALLBACK_GAS =  30000
 const REQUEST_GAS  = 300000
-const SUPPLY_GAS   = 500000
+const SUPPLY_GAS   = 600000
 
 /*====================================================================================================*/
 
