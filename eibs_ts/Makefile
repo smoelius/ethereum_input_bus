@@ -18,7 +18,8 @@ test:
 	mocha
 
 run:
-	node src/index.js
+	mkdir -p disk_cache
+	node src/index.js --debug --mem-cache --disk-cache disk_cache
 
 clean:
 	rm -f disk_cache/*
