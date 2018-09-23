@@ -12,7 +12,7 @@ To run the Spellcheck example, perform the steps below with X = the path the Spe
 To run the Proxy Web UI example, perform the steps below with X = the path to the Proxy Web UI
 directory, but skip step 5.
 
-0. Ensure that [Ganache](https://truffleframework.com/ganache), [Metamask](https://metamask.io/), and
+0. Ensure that [Ganache](https://truffleframework.com/ganache), [MetaMask](https://metamask.io/), and
    all of the prerequisites listed in [README.md](../README.md#user-content-prerequisites) are
    installed.
 
@@ -20,10 +20,10 @@ directory, but skip step 5.
 
 2. Open a terminal window in which to perform steps 3-7 below.
 
-3. Send your Metamask account some ether: cd to the `eib` directory, type `truffle console`, enter the
+3. Send your MetaMask account some ether: cd to the `eib` directory, type `truffle console`, enter the
    following command, and then type `ctrl-D` to exit:
 
-  * `web3.eth.sendTransaction({to: "`*your_Metamask_account*`", from: "`*first_account_in_Ganache*`", value: web3.toWei(10, "ether") })`
+  * `web3.eth.sendTransaction({to: "`*your_MetaMask_account*`", from: "`*first_account_in_Ganache*`", value: web3.toWei(10, "ether") })`
 
 4. cd to the `eib` directory and type `make clean deploy`.
 

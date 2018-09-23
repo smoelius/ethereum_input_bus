@@ -17,7 +17,7 @@ Contents
 
 ## Introduction
 
-Ethereum Input Bus (EIB) provides a means for moving data onto the Ethereuem blockchain securely.
+Ethereum Input Bus (EIB) provides a means for moving data onto the Ethereum blockchain securely.
 
 More specifically, EIB allows an Ethereum contract to crowd-source a read from the InterPlanetary File
 System ([IPFS](https://ipfs.io/)), and for a respondent to supply the data and prove that the data is
@@ -89,8 +89,8 @@ The above packages can be installed with the following command:
 With the above packages installed, one should be able to build EIB by simply typing `make`.
 
 Note that running the [examples](examples/README.md) also requires that
-[Ganache](https://truffleframework.com/ganache) and [Metamask](https://metamask.io/) be installed.
-However, Ganache and Metamask are not required to build the examples.
+[Ganache](https://truffleframework.com/ganache) and [MetaMask](https://metamask.io/) be installed.
+However, Ganache and MetaMask are not required to build the examples.
 
 
 ## Testing
@@ -101,7 +101,7 @@ EIB can be tested in two ways:
 
   * with `eibs_ts` responding to requests (useful for testing `eibs_ts`).
 
-Details of either method are given in `eib`'s README and `eibs_ts`'s README, repesctively (TODO).
+Details of either method are given in `eib`'s README and `eibs_ts`'s README, respectively (TODO).
 
 
 ## Reporting bugs
