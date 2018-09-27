@@ -16,7 +16,8 @@ LC_ALL=C sort -c "$DICT"
 
 IPFS_MULTIHASH="$(jsipfs add "$DICT" | awk '{print $2}')"
 IPFS_HASH="$(../../bin/uint256_from_ipfs_multihash "$IPFS_MULTIHASH")"
-FILE_LENGTH="$(stat -L --printf='%s' "$DICT")"
+# smoelius: Using stat in the next line is not portable.
+FILE_LENGTH="$(ls -l "$DICT" | awk '{print $5}')"
 MERKLE_ROOT="$(../../bin/kectr --root "$DICT")"
 
 LONGEST_WORD_LENGTH="$(cat "$DICT" | tr -c '\n' x | sort | tail -1 | tr -d '\n' | wc -c)"
