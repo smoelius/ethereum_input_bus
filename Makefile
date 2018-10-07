@@ -75,10 +75,8 @@ check_unsupply_gas_costs: check_unsupply_selection_gas_cost check_unsupply_intro
     check_unsupply_main_gas_cost
 
 check_unsupply_selection_gas_cost: eib/Input_bus_opcodes.txt
-	grep "\<UNSUPPLY_SELECTION_GAS_COST = $$( (cd eib && truffle opcode Input_bus) \
-	    | grep '^[0-9]\+:' \
-	    | sed "s/$$(bin/selector 'unsupply(uint256)')/&/;T;n;n;n;q" \
-	    | scripts/sum_opcode_gas_costs.sh '' '\(.*\)' \
+	grep "\<UNSUPPLY_SELECTION_GAS_COST = $$(scripts/selection_gas_cost.sh \
+	    'unsupply(uint256)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
 
