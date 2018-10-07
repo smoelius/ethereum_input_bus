@@ -32,9 +32,11 @@ contract Input_bus {
   
   uint constant G_JUMPDEST = 1;
   
-  uint constant PRE_CALLBACK_OVERHEAD = 726;
-  uint constant POST_CALLBACK_OVERHEAD = 7;
-  uint constant PRE_RETURN_OVERHEAD = 265 + G_JUMPDEST;
+  uint constant C_JUMPDEST = G_JUMPDEST;
+  
+  uint256 constant PRE_CALLBACK_OVERHEAD = 726;
+  uint256 constant POST_CALLBACK_OVERHEAD = 7;
+  uint256 constant PRE_RETURN_OVERHEAD = 265 + C_JUMPDEST;
   
   /*==================================================================================================*
    * Datatypes
@@ -107,8 +109,15 @@ contract Input_bus {
   
   event Request_canceled(uint req_id);
   
-  event Request_supplied(uint req_id, address supplier, bytes32[] data, bytes32[] proof,
-    uint callback_gas_start, uint callback_gas_end, bool callback_result);
+  event Request_supplied(
+    uint req_id,
+    address supplier,
+    bytes32[] data,
+    bytes32[] proof,
+    uint256 callback_gas_start,
+    uint256 callback_gas_end,
+    bool callback_result
+  );
   
   event Request_paidout(uint req_id, address payee, uint value);
   
@@ -304,8 +313,8 @@ contract Input_bus {
     
     n_supplied++;
     
-    uint callback_gas_start;
-    uint callback_gas_end;
+    uint256 callback_gas_start;
+    uint256 callback_gas_end;
     bool callback_result;
     
     (callback_gas_start, callback_gas_end, callback_result) = activate_callback(_req_id, callback_req);
@@ -331,9 +340,9 @@ contract Input_bus {
     // smoelius: Use a right-shift in computing the gas cap.  If you use a divide, then Solidity will
     // insert a branch.
     
-    uint gas_cap = callback_gas_start - (callback_gas_start >> 6);
+    uint256 gas_cap = callback_gas_start - (callback_gas_start >> 6);
     
-    uint post_callback_gas_used = callback_gas_end - (gasleft() - PRE_RETURN_OVERHEAD);
+    uint256 post_callback_gas_used = callback_gas_end - (gasleft() - PRE_RETURN_OVERHEAD);
     
     bool fail = gas_cap < post_callback_gas_used + req.callback_gas;
     assembly {
@@ -459,10 +468,10 @@ contract Input_bus {
     
     address requestor = _req.requestor;
     bytes4 callback_id = _req.callback_id;
-    uint callback_gas = _req.callback_gas;
+    uint256 callback_gas = _req.callback_gas;
     
-    uint callback_gas_start;
-    uint callback_gas_end;
+    uint256 callback_gas_start;
+    uint256 callback_gas_end;
     bool callback_result;
     
     assembly {
