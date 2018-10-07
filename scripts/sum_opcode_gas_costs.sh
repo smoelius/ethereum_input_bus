@@ -7,7 +7,9 @@ FLAG_VERBOSE_SUM=1
 FLAG_VERBOSE_OPCODE=2
 FLAG_VERBOSE_UNHANDLED=4
 
-VERBOSE=1
+if [[ -z "$VERBOSE" ]]; then
+  VERBOSE=0
+fi
 
 set -eu
 
@@ -75,14 +77,16 @@ function opcode_gas_cost() {
     fi
   done; \
   echo
-) \
-| while read LINE; do
+) | (
+  SUM_PREV=-1
+  while read LINE; do
     set +e
     LINE="$(expr "$LINE" : "$PATTERN")"
     set -e
     if [[ -z "$LINE" ]]; then
       continue
     fi
+    # echo "$LINE" >&2
     SUM=0
     for OPCODE in $LINE; do
       COST=$(opcode_gas_cost "$OPCODE")
@@ -103,9 +107,20 @@ function opcode_gas_cost() {
       if [[ $(($VERBOSE & $FLAG_VERBOSE_SUM)) -ne 0 ]]; then
         printf "%24d\n" "$SUM" >&2
       fi
-      echo "$SUM"
+      if [[ $SUM_PREV -lt 0 ]]; then
+        echo "$SUM"
+      elif [[ $SUM_PREV -ne $SUM ]]; then
+        echo "$ARGV0: pattern produced multiple results" >&2
+        exit 1
+      fi
+      SUM_PREV=$SUM
     fi
   done
+  if [[ $SUM_PREV -lt 0 ]]; then
+    echo "$ARGV0: pattern produced no results" >&2
+    exit 1
+  fi
+)
 
 exit 0
 
