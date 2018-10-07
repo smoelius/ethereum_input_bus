@@ -219,7 +219,7 @@ node.on("ready", () => {
           const supplement = common.guard.Request_supplied(event)
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
-            supplement.callback_gas_start.minus(supplement.callback_gas_end).toNumber())
+            supplement.callback_gas_before.minus(supplement.callback_gas_after).toNumber())
           if (config.payee_address
               && new BigNumber(supplement.supplier).equals(config.self_address || "")) {
             log("paying-out request %d...", supplement.req_id)

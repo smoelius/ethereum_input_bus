@@ -114,8 +114,8 @@ contract Input_bus {
     address supplier,
     bytes32[] data,
     bytes32[] proof,
-    uint256 callback_gas_start,
-    uint256 callback_gas_end,
+    uint256 callback_gas_before,
+    uint256 callback_gas_after,
     bool callback_result
   );
   
@@ -313,19 +313,20 @@ contract Input_bus {
     
     n_supplied++;
     
-    uint256 callback_gas_start;
-    uint256 callback_gas_end;
+    uint256 callback_gas_before;
+    uint256 callback_gas_after;
     bool callback_result;
     
-    (callback_gas_start, callback_gas_end, callback_result) = activate_callback(_req_id, callback_req);
+    (callback_gas_before, callback_gas_after, callback_result)
+      = activate_callback(_req_id, callback_req);
     
     emit Request_supplied(
       _req_id,
       msg.sender,
       bytes32_from_uint256(_data),
       bytes32_from_uint256(_proof),
-      callback_gas_start,
-      callback_gas_end,
+      callback_gas_before,
+      callback_gas_after,
       callback_result
     );
     
@@ -340,9 +341,9 @@ contract Input_bus {
     // smoelius: Use a right-shift in computing the gas cap.  If you use a divide, then Solidity will
     // insert a branch.
     
-    uint256 gas_cap = callback_gas_start - (callback_gas_start >> 6);
+    uint256 gas_cap = callback_gas_before - (callback_gas_before >> 6);
     
-    uint256 post_callback_gas_used = callback_gas_end - (gasleft() - PRE_RETURN_OVERHEAD);
+    uint256 post_callback_gas_used = callback_gas_after - (gasleft() - PRE_RETURN_OVERHEAD);
     
     bool fail = gas_cap < post_callback_gas_used + req.callback_gas;
     assembly {
@@ -404,7 +405,7 @@ contract Input_bus {
         kec256_validate_data_proof_leaf(_offset, _start, _end, _data, _proof[_proof_index]);
       }
       return _proof_index;
-    } else if (_offset + width / 2 >= _file_length) {
+    } else if (_offset + width / 2 >= ceil_div(_file_length, 32) * 32) {
       return kec256_validate_data_proof(_height - 1, _offset, _file_length, _start, _end, _data,
         _proof_index, _proof);
     } else {
@@ -470,22 +471,22 @@ contract Input_bus {
     bytes4 callback_id = _req.callback_id;
     uint256 callback_gas = _req.callback_gas;
     
-    uint256 callback_gas_start;
-    uint256 callback_gas_end;
+    uint256 callback_gas_before;
+    uint256 callback_gas_after;
     bool callback_result;
     
     assembly {
       mstore(0x00, callback_id)
       mstore(0x04, _req_id)
-      callback_gas_start := gas
+      callback_gas_before := gas
       callback_result := call(callback_gas, requestor, 0, 0, 0x24, 0, 0)
-      callback_gas_end := gas
+      callback_gas_after := gas
     }
     
-    callback_gas_start -= PRE_CALLBACK_OVERHEAD;
-    callback_gas_end += POST_CALLBACK_OVERHEAD;
+    callback_gas_before -= PRE_CALLBACK_OVERHEAD;
+    callback_gas_after += POST_CALLBACK_OVERHEAD;
     
-    return (callback_gas_start, callback_gas_end, callback_result);
+    return (callback_gas_before, callback_gas_after, callback_result);
   }
   
   // smoelius: Make unsupply payable to eliminate a CALLVALUE check.

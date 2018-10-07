@@ -229,15 +229,16 @@ export function stress(context: Test_context): void {
                 event: "Request_supplied",
                 callback: (event, receipt) => {
                   const supplement = guard.Request_supplied(event)
+                  const callback_gas_used
+                    = supplement.callback_gas_before.minus(supplement.callback_gas_after)
                   assert(supplement.req_id.equals(request.req_id))
                   assert(conversion.json_equals(supplement.data.map(conversion.to_bignumber), data))
                   assert(conversion.json_equals(supplement.proof.map(conversion.to_bignumber), proof))
                   if (!(context.options.external_supplier === true)
                       && (data.length !== 0 || proof.length !== 0)) {
-                    const callback_gas_used
-                      = supplement.callback_gas_start.minus(supplement.callback_gas_end).toNumber()
                     console.error(`${data.length}\t${proof.length}`
-                      + `\t${receipt.gasUsed || 0 - callback_gas_used}`)
+                      + `\t${receipt.gasUsed || 0 - callback_gas_used.toNumber()}`
+                    )
                   }
                   return almost_done()
                 }

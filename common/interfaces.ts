@@ -39,8 +39,8 @@ export interface Request_supplied {
   supplier: string
   data: string[]
   proof: string[]
-  callback_gas_start: BigNumber
-  callback_gas_end: BigNumber
+  callback_gas_before: BigNumber
+  callback_gas_after: BigNumber
   callback_result: boolean
 }
 
