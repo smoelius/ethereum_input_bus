@@ -4,7 +4,7 @@
 
 WEBPACKFLAGS := --mode=development
 
-.PHONY: all deploy pre_tsc compile post_tsc check test clobber clean
+.PHONY: all deploy pre_tsc post_tsc compile check test clobber clean
 
 #======================================================================================================#
 

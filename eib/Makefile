@@ -2,7 +2,7 @@
 # Makefile for Ethereum Input Bus implemented in Solidity
 #======================================================================================================#
 
-.PHONY: all deploy pre_tsc compile post_tsc \
+.PHONY: all deploy pre_tsc post_tsc compile \
   check check_pre_callback_overhead check_post_callback_overhead check_pre_return_overhead \
   test clean
 
@@ -20,9 +20,6 @@ post_tsc: compile
 compile: build/contracts/Input_bus.json \
          build/contracts/Migrations.json \
          build/contracts/Proxy_requestor.json
-
-build/contracts/Input_bus.json: contracts/Input_bus.sol
-	truffle compile
 
 build/contracts/%.json: contracts/%.sol
 	truffle compile
