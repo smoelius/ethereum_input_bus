@@ -34,13 +34,17 @@ const UNSUPPLY_SELECTOR = common.selector("unsupply(uint256)")
 
 const UNSUPPLY_SELECTION_GAS_COST = 427
 const UNSUPPLY_INTRO_GAS_COST = 63 + common.C_JUMP
-const UNSUPPLY_MAIN_GAS_COST = 40913 + common.C_JUMPDEST + 2 * common.G_SHA3WORD
+const UNSUPPLY_MAIN_GAS_COST = 40913 + common.C_JUMPDEST
+  + 2 * common.G_SHA3WORD
   - common.G_SSET + common.G_SRESET - common.R_SCLEAR
   - common.G_SSET + common.G_SRESET
 // smoelius: I am not sure that the next value is correct---it is my best guess.
 const UNSUPPLY_MEMORY_GAS_COST = 3 * common.G_MEMORY
 
-const UNSUPPLY_GAS_COST = UNSUPPLY_SELECTION_GAS_COST + UNSUPPLY_INTRO_GAS_COST + UNSUPPLY_MAIN_GAS_COST
+const UNSUPPLY_GAS_COST =
+    UNSUPPLY_SELECTION_GAS_COST
+  + UNSUPPLY_INTRO_GAS_COST
+  + UNSUPPLY_MAIN_GAS_COST
   + UNSUPPLY_MEMORY_GAS_COST
 
 const PAYOUT_GAS = 200000
@@ -154,10 +158,11 @@ node.on("ready", () => {
           let proof_length: number
           let supply_gas_estimate: number
           if (config.model_flag) {
-            data_length = common.calculate_data_length(request.file_addr[1].toNumber(),
-              request.start.toNumber(), request.end.toNumber())
+            data_length = common.calculate_data_length(
+              request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber(), request.start.toNumber(),
+              request.end.toNumber())
             proof_length = common.calculate_proof_length(request.start.toNumber(),
-              request.end.toNumber(), request.file_addr[1].toNumber())
+              request.end.toNumber(), request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber())
             supply_gas_estimate = model_estimate_supply_gas(data_length, proof_length)
             log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
           }
@@ -262,7 +267,7 @@ function web3_estimate_supply_gas(data: BigNumber[], proof: BigNumber[],
   supply_id.writeUInt32BE(SUPPLY_SELECTOR, 0)
   const supply_call = Buffer.concat([
       supply_id,
-      common.buffer_from_uint256(new BigNumber(1)), // FLAG_SUPPLY_SIMULATE
+      common.buffer_from_uint256(new BigNumber(EIB.FLAG_SUPPLY_SIMULATE)),
       common.buffer_from_uint256(request.req_id),
       common.buffer_from_uint256(new BigNumber(128)),
       common.buffer_from_uint256(new BigNumber(128 + (1 + data.length) * 32))
