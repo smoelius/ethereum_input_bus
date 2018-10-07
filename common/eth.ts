@@ -12,17 +12,19 @@ import Web3 from "web3"
 
 // export const BLOCK_GAS_LIMIT = 4712388
 
-export const C_JUMPDEST      = 1
-export const C_JUMP          = 8
-
+export const G_MID           =     8
+export const G_JUMPDEST      =     1
 export const G_SSET          = 20000
-export const G_SRESET        = 5000
+export const G_SRESET        =  5000
 export const R_SCLEAR        = 15000
-export const G_MEMORY        = 3
-export const G_TXDATAZERO    = 4
-export const G_TXDATANONZERO = 68
+export const G_MEMORY        =     3
+export const G_TXDATAZERO    =     4
+export const G_TXDATANONZERO =    68
 export const G_TRANSACTION   = 21000
-export const G_SHA3WORD      = 6
+export const G_SHA3WORD      =     6
+
+export const C_JUMP          = G_MID
+export const C_JUMPDEST      = G_JUMPDEST
 
 /*====================================================================================================*/
 
@@ -60,6 +62,8 @@ export function handle_receipt_events(promised_receipt: Promise<types.Transactio
     if (receipt === null) {
       return assert(false)
     }
+
+    // console.log(JSON.stringify(receipt.logs))
 
     let found = false
     for (const abi_event_callback of abi_event_callbacks) {
