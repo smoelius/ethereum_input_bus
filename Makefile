@@ -25,7 +25,13 @@ SRC := $(filter-out %-ti.ts, \
          $(wildcard util/*.ts) \
        )
 
-.PHONY: all pre_tsc compile post_tsc lint check check_simulation_overhead clobber clean
+.PHONY: all pre_tsc compile post_tsc lint \
+  check \
+    check_unsupply_gas_costs \
+      check_unsupply_selection_gas_cost \
+      check_unsupply_intro_gas_cost \
+      check_unsupply_main_gas_cost \
+  clobber clean
 
 # From: https://www.gnu.org/software/make/manual/html_node/Special-Targets.html
 # .SECONDARY with no prerequisites causes all targets to be treated as secondary (i.e., no target is
@@ -58,34 +64,45 @@ post_tsc:
 lint:
 	-tslint --project tsconfig.json | grep -w 'falsy'
 
-check: check_simulation_overhead
+#======================================================================================================#
+
+check: check_unsupply_gas_costs
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
 
-check_simulation_overhead: eib/Input_bus_opcodes.txt eib/build/contracts/Input_bus.json
+check_unsupply_gas_costs: check_unsupply_selection_gas_cost check_unsupply_intro_gas_cost \
+    check_unsupply_main_gas_cost
+
+check_unsupply_selection_gas_cost: eib/Input_bus_opcodes.txt
 	grep "\<UNSUPPLY_SELECTION_GAS_COST = $$( (cd eib && truffle opcode Input_bus) \
 	    | grep '^[0-9]\+:' \
 	    | sed "s/$$(bin/selector 'unsupply(uint256)')/&/;T;n;n;n;q" \
 	    | scripts/sum_opcode_gas_costs.sh '' '\(.*\)' \
 	  )\>" \
 	  eibs_ts/src/index.ts
+
+check_unsupply_intro_gas_cost: eib/Input_bus_opcodes.txt
 	grep "\<UNSUPPLY_INTRO_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
 	      '\<JUMP\>\|\<RETURN\>\|\<CALLVALUE\>' \
 	      '\(\<JUMPDEST\>.*.*\<CALLDATASIZE\>.*\<CALLDATALOAD\>.*\)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
+
+check_unsupply_main_gas_cost: eib/Input_bus_opcodes.txt
 	grep "\<UNSUPPLY_MAIN_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
 	      '\<JUMP\>\|\<RETURN\>' \
 	      '\(\<JUMPDEST\>.*\<ADDRESS\>.*\<CALLER\>.*\<REVERT\>\)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
 
-eib/Input_bus_opcodes.txt:
+eib/Input_bus_opcodes.txt: eib/build/contracts/Input_bus.json
 	$(MAKE) -C eib Input_bus_opcodes.txt
 
 eib/build/contracts/Input_bus.json:
 	$(MAKE) -C eib build/contracts/Input_bus.json
+
+#======================================================================================================#
 
 %-ti.ts: %.ts
 	ts-interface-builder $<
