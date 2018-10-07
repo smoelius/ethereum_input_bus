@@ -136,11 +136,11 @@ contract Spellcheck {
     return sc_id;
   }
   
-  function search(uint _sc_id, Spellcheck_struct storage sc) internal {
-    if (sc.low >= sc.high) {
+  function search(uint _sc_id, Spellcheck_struct storage _sc) internal {
+    if (_sc.low >= _sc.high) {
       n_ended++;
-      emit Spellcheck_end(_sc_id, false, sc.value);
-      if (sc.value <= 0) {
+      emit Spellcheck_end(_sc_id, false, _sc.value);
+      if (_sc.value <= 0) {
         n_refunded++;
         delete scs[_sc_id];
       }
@@ -153,18 +153,18 @@ contract Spellcheck {
     
     uint128 start;
     uint128 end;
-    if (uint256(sc.low) + max_length >= uint256(sc.high)) {
-      start = sc.low;
-      end = sc.high;
+    if (uint256(_sc.low) + max_length >= uint256(_sc.high)) {
+      start = _sc.low;
+      end = _sc.high;
     } else {
-      start = uint128((uint256(sc.low) + uint256(sc.high) - max_length) / 2);
+      start = uint128((uint256(_sc.low) + uint256(_sc.high) - max_length) / 2);
       end = uint128(uint256(start) + max_length);
     }
     
-    assert(sc.value >= sc.req_value);
-    sc.value -= sc.req_value;
+    assert(_sc.value >= _sc.req_value);
+    _sc.value -= _sc.req_value;
     
-    uint req_id = eib.request.value(sc.req_value)(
+    uint req_id = eib.request.value(_sc.req_value)(
       0, // no flags
       Input_bus.file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT,
       file_addr,
@@ -177,8 +177,8 @@ contract Spellcheck {
     
     emit Spellcheck_update(
       _sc_id,
-      sc.low,
-      sc.high,
+      _sc.low,
+      _sc.high,
       req_id,
       start,
       end
