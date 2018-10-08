@@ -13,7 +13,7 @@ all: pre_tsc post_tsc
 # smoelius: deploy requires that Dict.sol be generated.  (Since deploy will overwrite *.json, there is
 # likely a better way to organize this Makefile.)
 deploy: Dict.sol
-	truffle deploy
+	npx truffle deploy
 
 # smoelius: Note that "compile" cannot be a pre_tsc dependency because the contents of the util
 # directory must be tsc-compiled before generate_dict_sol.sh can be run.
@@ -22,7 +22,7 @@ pre_tsc:
 post_tsc: dist/main.js
 
 dist/main.js: src/index.js Input_bus_artifacts.js Spellcheck_artifacts.js Dict_artifacts.js
-	webpack $(WEBPACKFLAGS) $(addprefix ./, $^)
+	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $^)
 
 Input_bus_artifacts.js: eib_build/contracts/Input_bus.json
 	(echo -n "Input_bus_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
@@ -39,10 +39,10 @@ compile: build/contracts/Input_bus.json \
          build/contracts/Dict.json
 
 build/contracts/%.json: contracts/%.sol Dict.sol
-	truffle compile
+	npx truffle compile
 
 build/contracts/Dict.json: Dict.sol
-	truffle compile
+	npx truffle compile
 
 Dict.sol: words.sorted
 	./generate_dict_sol.sh $< > $@ || (rm -f $@ && false)

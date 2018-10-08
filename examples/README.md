@@ -12,8 +12,7 @@ To run the Spellcheck example, perform the steps below with X = the path the Spe
 To run the Proxy Web UI example, perform the steps below with X = the path to the Proxy Web UI
 directory, but skip step 5.
 
-0. Ensure that [Ganache](https://truffleframework.com/ganache), [MetaMask](https://metamask.io/), and
-   all of the prerequisites listed in [README.md](../README.md#user-content-prerequisites) are
+0. Ensure that [Ganache](https://truffleframework.com/ganache) and [MetaMask](https://metamask.io/) are
    installed.
 
 1. Launch Ganache.

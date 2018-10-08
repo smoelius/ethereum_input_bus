@@ -52,7 +52,7 @@ pre_tsc:
 compile: common/index.js
 
 common/index.js: $(TI) $(SRC) node_modules
-	tsc $(TSCFLAGS)
+	npx tsc $(TSCFLAGS)
 	@# smoelius: The modification time of common/index.js is used to indicate the last time that tsc was
 	@# invoked.
 	touch $@
@@ -105,7 +105,7 @@ eib/build/contracts/Input_bus.json:
 #======================================================================================================#
 
 %-ti.ts: %.ts
-	ts-interface-builder $<
+	npx ts-interface-builder $<
 
 node_modules:
 	npm install

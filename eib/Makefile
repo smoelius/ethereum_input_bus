@@ -29,7 +29,7 @@ GREP := grep --color=auto
 all: pre_tsc post_tsc
 
 deploy:
-	truffle deploy
+	npx truffle deploy
 
 pre_tsc:
 
@@ -40,7 +40,7 @@ compile: build/contracts/Input_bus.json \
          build/contracts/Proxy_requestor.json
 
 build/contracts/%.json: contracts/%.sol
-	truffle compile
+	npx truffle compile
 
 #======================================================================================================#
 
@@ -155,15 +155,15 @@ check_get_proof_selection_gas_cost: Input_bus_opcodes.txt
 #======================================================================================================#
 
 Input_bus_opcodes.txt: build/contracts/Input_bus.json
-	truffle opcode Input_bus | grep '^[0-9]\+:' > $@
+	npx truffle opcode Input_bus | grep '^[0-9]\+:' > $@
 
 Proxy_requestor_opcodes.txt: build/contracts/Proxy_requestor.json
-	truffle opcode Proxy_requestor | grep '^[0-9]\+:' > $@
+	npx truffle opcode Proxy_requestor | grep '^[0-9]\+:' > $@
 
 #======================================================================================================#
 
 test:
-	mocha
+	npx mocha
 
 clean:
 	rm -f Input_bus_opcodes.txt

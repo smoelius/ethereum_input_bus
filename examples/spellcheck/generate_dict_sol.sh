@@ -14,7 +14,7 @@ DICT="$1"
 
 LC_ALL=C sort -c "$DICT"
 
-IPFS_MULTIHASH="$(jsipfs add "$DICT" | awk '{print $2}')"
+IPFS_MULTIHASH="$(npx jsipfs add "$DICT" | awk '{print $2}')"
 IPFS_HASH="$(../../bin/uint256_from_ipfs_multihash "$IPFS_MULTIHASH")"
 # smoelius: Using stat in the next line is not portable.
 FILE_LENGTH="$(ls -l "$DICT" | awk '{print $5}')"

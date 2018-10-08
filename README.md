@@ -68,25 +68,7 @@ A requestor can cancel its request at any time before the data has been supplied
 
 ## Building
 
-Building EIB requires that the following NPM packages be installed globally:
-
-  * `ipfs`
-
-  * `mocha`
-
-  * `truffle`
-
-  * `ts-interface-builder`
-
-  * `typescript`
-
-  * `webpack`
-
-The above packages can be installed with the following command:
-
-    npm install -g ipfs mocha truffle ts-interface-builder typescript webpack
-
-With the above packages installed, one should be able to build EIB by simply typing `make`.
+One should be able to build EIB by simply typing `make`.
 
 Note that running the [examples](examples/README.md) also requires that
 [Ganache](https://truffleframework.com/ganache) and [MetaMask](https://metamask.io/) be installed.

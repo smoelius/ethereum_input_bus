@@ -15,7 +15,7 @@ post_tsc:
 check:
 
 test:
-	mocha
+	npx mocha
 
 run:
 	mkdir -p disk_cache
