@@ -59,9 +59,9 @@ that the data is correct.  Put another way, this requirement ensures that `eib` 
 cheating supplier who sends bogus data.
 
 The call to `request` also includes the amount of Ether that the requestor is willing to pay for the
-read.  The supplier uses some fraction of this Ether to fund the gas for the requestor's callback.  The
-supplier keeps the remaining fraction as profit.  `eib` does **not** keep any fraction of this Ether
-for itself.
+read.  The supplier uses some fraction of this Ether to pay for the gas needed to verify the Merkle
+proof and for the requestor's callback.  The supplier keeps the remaining fraction as profit.  `eib`
+does **not** keep any fraction of this Ether for itself.
 
 A requestor can cancel its request at any time before the data has been supplied.
 
