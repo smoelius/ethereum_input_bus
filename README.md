@@ -27,15 +27,15 @@ file, and the data is of the correct length.
 
 ## Repository contents
 
-The EIB repository consists of (TODO: link to READMEs):
+The EIB repository consists of:
 
-  * `eib`: the EIB contract itself (receives requests, verifies responses, etc.),
+  * [`eib`](eib/README.md): the EIB contract itself (receives requests, verifies responses, etc.),
 
-  * `eibs_ts`: a prototype EIB supplier implemented in TypeScript,
-  
+  * [`eibs`](eibs_ts/README.md): a prototype EIB supplier implemented in TypeScript,
+
   * [example webapps](examples/README.md) written to use EIB, and
 
-  * utilities for working with EIB.
+  * [utilities](util/README.md) for working with EIB.
 
 
 ## How EIB works
@@ -79,11 +79,13 @@ However, Ganache and MetaMask are not required to build the examples.
 
 EIB can be tested in two ways:
 
-  * with the testing framework itself responding to requests (useful for testing `eib`) or
+  * with the testing framework itself responding to requests (useful for testing the EIB contract
+    itself) or
 
-  * with `eibs_ts` responding to requests (useful for testing `eibs_ts`).
+  * with `eibs` responding to requests (useful for testing `eibs`).
 
-Details of either method are given in `eib`'s README and `eibs_ts`'s README, respectively (TODO).
+Details are given in the EIB contract's [README](eib/README.md) and in `eibs`'
+[README](eibs_ts/README.md), respectively.
 
 
 ## Reporting bugs
