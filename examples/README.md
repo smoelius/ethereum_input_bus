@@ -7,7 +7,7 @@ The `examples` directory contains two sample webapps written to use EIB.
 * Spellcheck is a contract that checks for the presence/absence of a word in a dictionary.  EIB is used
   to read from the dictionary.
 
-To run the Spellcheck example, perform the steps below with X = the path the Spellcheck directory.
+To run the Spellcheck example, perform the steps below with X = the path to the Spellcheck directory.
 
 To run the Proxy Web UI example, perform the steps below with X = the path to the Proxy Web UI
 directory, but skip step 5.
