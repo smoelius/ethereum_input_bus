@@ -25,8 +25,6 @@ export const PAYEE_DEFAULT = 0
 
 /*====================================================================================================*/
 
-export const PROXY_CALLBACK_ZERO = 0
-export const PROXY_CALLBACK_ONE  = 1
-export const PROXY_CALLBACK_TWO  = 2
+export const PROXY_CALLBACK_GAS_DEFAULT = 0
 
 /*====================================================================================================*/

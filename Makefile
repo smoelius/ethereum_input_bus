@@ -10,6 +10,8 @@
 
 TSCFLAGS := # --traceResolution
 
+GREP := grep --color=auto
+
 TI := common/interfaces-ti.ts \
       eibs_ts/src/interfaces-ti.ts \
       examples/spellcheck/src/interfaces-ti.ts
@@ -75,22 +77,22 @@ check_unsupply_gas_costs: check_unsupply_selection_gas_cost check_unsupply_intro
     check_unsupply_main_gas_cost
 
 check_unsupply_selection_gas_cost: eib/Input_bus_opcodes.txt
-	grep "\<UNSUPPLY_SELECTION_GAS_COST = $$(scripts/selection_gas_cost.sh \
+	$(GREP) -- "\<UNSUPPLY_SELECTION_GAS_COST = $$(scripts/selection_gas_cost.sh \
 	    'unsupply(uint256)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
 
 check_unsupply_intro_gas_cost: eib/Input_bus_opcodes.txt
-	grep "\<UNSUPPLY_INTRO_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
-	      '\<JUMP\>\|\<RETURN\>\|\<CALLVALUE\>' \
-	      '\(\<JUMPDEST\>.*.*\<CALLDATASIZE\>.*\<CALLDATALOAD\>.*\)' < $< \
+	$(GREP) -- "\<UNSUPPLY_INTRO_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
+	    '\<INVALID\>\|\<JUMP\>\|\<RETURN\>\|\<STOP\>\|\<CALLVALUE\>' \
+	    '\(\<JUMPDEST\>.*.*\<CALLDATASIZE\>.*\<CALLDATALOAD\>.*\)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
 
 check_unsupply_main_gas_cost: eib/Input_bus_opcodes.txt
-	grep "\<UNSUPPLY_MAIN_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
-	      '\<JUMP\>\|\<RETURN\>' \
-	      '\(\<JUMPDEST\>.*\<ADDRESS\>.*\<CALLER\>.*\<REVERT\>\)' < $< \
+	$(GREP) -- "\<UNSUPPLY_MAIN_GAS_COST = $$(scripts/sum_opcode_gas_costs.sh \
+	    '\<INVALID\>\|\<JUMP\>\|\<RETURN\>\|\<STOP\>' \
+	    '\(\<JUMPDEST\>.*\<ADDRESS\>.*\<CALLER\>.*\<MUL\>.*.*\<REVERT\>\)' < $< \
 	  )\>" \
 	  eibs_ts/src/index.ts
 

@@ -53,8 +53,15 @@ export interface Request_paidout {
 export interface Proxy_callback {
   req_id: BigNumber
   supplier: string
-  data: BigNumber[]
-  proof: BigNumber[]
+  data: string[]
+  proof: string[]
+  get_supplier_gas_before: BigNumber
+  get_supplier_gas_after: BigNumber
+  get_data_gas_before: BigNumber
+  get_data_gas_after: BigNumber
+  get_proof_gas_before: BigNumber
+  get_proof_gas_after: BigNumber
+  end_of_memory: BigNumber
 }
 
 /*====================================================================================================*/

@@ -25,7 +25,7 @@ PATTERN="$2"
 
 function opcode_gas_cost() {
   case "$1" in
-    RETURN | REVERT)
+    INVALID | RETURN | REVERT)
       echo 0
       ;;
     JUMPDEST)
@@ -54,6 +54,9 @@ function opcode_gas_cost() {
       ;;
     SLOAD)
       echo 200
+      ;;
+    LOG1)
+      echo $((375 + 375)) # smoelius: Hack: does not take into account G_LOGDATA.
       ;;
     CALL)
       echo 700

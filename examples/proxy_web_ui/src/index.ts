@@ -26,8 +26,7 @@ declare const Proxy_requestor_artifacts: any
 
 /*====================================================================================================*/
 
-const CALLBACK_GAS =  30000
-const REQUEST_GAS  = 300000
+const REQUEST_GAS = 300000
 
 /*====================================================================================================*/
 
@@ -133,8 +132,8 @@ function request(): void {
       start,
       end,
       EIB.LTIOV_NONE,
-      EIB.PROXY_CALLBACK_ZERO,
-      CALLBACK_GAS,
+      false,
+      EIB.PROXY_CALLBACK_GAS_DEFAULT,
       {
         from: accounts[0],
         value: value,
@@ -158,7 +157,6 @@ function request(): void {
                 && request.start.equals(start)
                 && request.end.equals(end)
                 && request.ltiov.equals(EIB.LTIOV_NONE)
-                && request.callback_gas.equals(new BigNumber(CALLBACK_GAS))
                 && request.value.equals(value))) {
               return false
             }
