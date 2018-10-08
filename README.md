@@ -29,9 +29,9 @@ file, and the data is of the correct length.
 
 The EIB repository consists of:
 
-  * [`eib`](eib/README.md): the EIB contract itself (receives requests, verifies responses, etc.),
+  * the [EIB contract](eib/README.md) itself (receives requests, verifies responses, etc.),
 
-  * [`eibs`](eibs_ts/README.md): a prototype EIB supplier implemented in TypeScript,
+  * a [prototype EIB supplier](eibs_ts/README.md) (`eibs`) implemented in TypeScript,
 
   * [example webapps](examples/README.md) written to use EIB, and
 
