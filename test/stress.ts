@@ -5,16 +5,16 @@
 import assert from "assert"
 import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
+import * as conversion from "../common/conversion"
+import * as eth from "../common/eth"
+import { get_file_info } from "../common/file_info"
+import { guard } from "../common/guard"
+import * as interfaces from "../common/interfaces"
+import * as math from "../common/math"
+import * as merkle from "../common/merkle"
+import { Test_context } from "../common/test"
+import { generate_test_file } from "../common/test_file"
 import * as EIB from "../eib/public/eib"
-import * as conversion from "./conversion"
-import * as eth from "./eth"
-import { get_file_info } from "./file_info"
-import { guard } from "./guard"
-import * as interfaces from "./interfaces"
-import * as math from "./math"
-import * as merkle from "./merkle"
-import { Test_context } from "./test"
-import { generate_test_file } from "./test_file"
 
 /*====================================================================================================*/
 

@@ -2,7 +2,8 @@
  * stress.ts
  *====================================================================================================*/
 
-import { stress, test } from "../../common"
+import { test } from "../../common"
+import { stress } from "../../test"
 
 test({ external_supplier: true }, stress)
 

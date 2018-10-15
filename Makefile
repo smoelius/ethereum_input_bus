@@ -24,6 +24,7 @@ SRC := $(filter-out %-ti.ts, \
          $(wildcard eibs_ts/test/*.ts) \
          $(wildcard examples/*/src/*.ts) \
          $(wildcard examples/*/test/*.ts) \
+         $(wildcard test/*.ts) \
          $(wildcard util/*.ts) \
        )
 
@@ -127,6 +128,7 @@ clean: tidy
 	rm -f examples/*/src/*-ti.ts
 	rm -f examples/*/src/*.js
 	rm -f examples/*/test/*.js
+	rm -f test/*.js
 	rm -f util/*.js
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
