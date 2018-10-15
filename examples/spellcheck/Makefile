@@ -4,6 +4,11 @@
 
 WEBPACKFLAGS := --mode=development
 
+JSON := eib_build/contracts/Input_bus.json \
+        build/contracts/Migrations.json \
+        build/contracts/Spellcheck.json \
+        build/contracts/Dict.json
+
 .PHONY: all deploy pre_tsc post_tsc compile check test clobber clean
 
 #======================================================================================================#
@@ -21,22 +26,10 @@ pre_tsc:
 
 post_tsc: dist/main.js
 
-dist/main.js: src/index.js Input_bus_artifacts.js Spellcheck_artifacts.js Dict_artifacts.js
-	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $^)
+dist/main.js: src/index.js $(JSON)
+	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $<)
 
-Input_bus_artifacts.js: eib_build/contracts/Input_bus.json
-	(echo -n "Input_bus_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
-
-Spellcheck_artifacts.js: build/contracts/Spellcheck.json
-	(echo -n "Spellcheck_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
-
-Dict_artifacts.js: build/contracts/Dict.json
-	(echo -n "Dict_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
-
-compile: build/contracts/Input_bus.json \
-         build/contracts/Migrations.json \
-         build/contracts/Spellcheck.json \
-         build/contracts/Dict.json
+compile: $(JSON)
 
 build/contracts/%.json: contracts/%.sol Dict.sol
 	npx truffle compile
@@ -65,9 +58,6 @@ clobber: clean
 
 clean:
 	rm -f dist/main.js
-	rm -f Input_bus_artifacts.js
-	rm -f Spellcheck_artifacts.js
-	rm -f Dict_artifacts.js
 	rm -f build/contracts/*.json
 
 #======================================================================================================#

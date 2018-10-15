@@ -10,6 +10,9 @@ import * as eth from "../../../common/eth"
 import { guard as eib_guard } from "../../../common/guard"
 import * as math from "../../../common/math"
 import * as web from "../../../common/web"
+import Dict_artifacts from "../build/contracts/Dict.json"
+import Spellcheck_artifacts from "../build/contracts/Spellcheck.json"
+import Input_bus_artifacts from "../eib_build/contracts/Input_bus.json"
 import { guard as sc_guard } from "./guard"
 import * as sc_interfaces from "./interfaces"
 
@@ -28,10 +31,6 @@ declare global {
     cancel: () => void
   }
 }
-
-declare const Input_bus_artifacts: any
-declare const Spellcheck_artifacts: any
-declare const Dict_artifacts: any
 
 /*====================================================================================================*/
 

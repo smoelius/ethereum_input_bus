@@ -10,6 +10,8 @@ import * as eth from "../../../common/eth"
 import { guard } from "../../../common/guard"
 import * as web from "../../../common/web"
 import * as EIB from "../../../eib/public/eib"
+import Input_bus_artifacts from "../build/contracts/Input_bus.json"
+import Proxy_requestor_artifacts from "../build/contracts/Proxy_requestor.json"
 
 /*====================================================================================================*/
 
@@ -20,9 +22,6 @@ declare global {
     cancel: () => void
   }
 }
-
-declare const Input_bus_artifacts: any
-declare const Proxy_requestor_artifacts: any
 
 /*====================================================================================================*/
 

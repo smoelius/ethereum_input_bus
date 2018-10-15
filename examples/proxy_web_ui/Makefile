@@ -4,6 +4,9 @@
 
 WEBPACKFLAGS := --mode=development
 
+JSON := build/contracts/Input_bus.json \
+        build/contracts/Proxy_requestor.json
+
 .PHONY: all pre_tsc post_tsc check clean
 
 #======================================================================================================#
@@ -14,20 +17,12 @@ pre_tsc:
 
 post_tsc: dist/main.js
 
-dist/main.js: src/index.js Input_bus_artifacts.js Proxy_requestor_artifacts.js
-	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $^)
-
-Input_bus_artifacts.js: build/contracts/Input_bus.json
-	(echo -n "Input_bus_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
-
-Proxy_requestor_artifacts.js: build/contracts/Proxy_requestor.json
-	(echo -n "Proxy_requestor_artifacts = JSON.parse('"; cat $< | tr -d '\n' | sed 's/\\/\\\\/g'; echo "')") > $@
+dist/main.js: src/index.js $(JSON)
+	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $<)
 
 check:
 
 clean:
 	rm -f dist/main.js
-	rm -f Input_bus_artifacts.js
-	rm -f Proxy_requestor_artifacts.js
 
 #======================================================================================================#
