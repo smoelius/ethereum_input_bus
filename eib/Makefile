@@ -11,9 +11,9 @@ GREP := grep --color=auto
       check_supply_post_callback_overhead \
       check_supply_pre_return_overhead \
     check_callback_nonemitting_gas_costs \
-      check_selection_gas_cost \
-      check_intro_gas_cost \
-      check_main_gas_cost \
+      check_callback_nonemitting_selection_gas_cost \
+      check_callback_nonemitting_intro_gas_cost \
+      check_callback_nonemitting_main_gas_cost \
     check_callback_emitting_gas_costs \
       check_callback_emitting_selection_gas_cost \
       check_callback_emitting_intro_gas_cost \
@@ -76,8 +76,10 @@ check_supply_pre_return_overhead: Input_bus_opcodes.txt
 
 #======================================================================================================#
 
-check_callback_nonemitting_gas_costs: check_callback_nonemitting_selection_gas_cost \
-    check_callback_nonemitting_intro_gas_cost check_callback_nonemitting_main_gas_cost
+check_callback_nonemitting_gas_costs: \
+    check_callback_nonemitting_selection_gas_cost \
+    check_callback_nonemitting_intro_gas_cost \
+    check_callback_nonemitting_main_gas_cost
 
 check_callback_nonemitting_selection_gas_cost: Proxy_requestor_opcodes.txt
 	$(GREP) -- "\<CALLBACK_NONEMITTING_SELECTION_GAS_COST = $$(../scripts/selection_gas_cost.sh \
@@ -101,10 +103,14 @@ check_callback_nonemitting_main_gas_cost: Proxy_requestor_opcodes.txt
 
 #======================================================================================================#
 
-check_callback_emitting_gas_costs: check_callback_emitting_selection_gas_cost \
-    check_callback_emitting_intro_gas_cost check_callback_emitting_main_gas_cost \
-    check_callback_emitting_pre_getter_overhead check_callback_emitting_post_getter_overhead \
-    check_get_data_selection_gas_cost check_get_proof_selection_gas_cost
+check_callback_emitting_gas_costs: \
+    check_callback_emitting_selection_gas_cost \
+    check_callback_emitting_intro_gas_cost \
+    check_callback_emitting_main_gas_cost \
+    check_callback_emitting_pre_getter_overhead \
+    check_callback_emitting_post_getter_overhead \
+    check_get_data_selection_gas_cost \
+    check_get_proof_selection_gas_cost
 
 check_callback_emitting_selection_gas_cost: Proxy_requestor_opcodes.txt
 	$(GREP) -- "\<CALLBACK_EMITTING_SELECTION_GAS_COST = $$(../scripts/selection_gas_cost.sh \
