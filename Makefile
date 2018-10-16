@@ -45,21 +45,20 @@ SRC := $(filter-out %-ti.ts, \
 
 all: pre_tsc compile post_tsc
 
-pre_tsc:
+pre_tsc: node_modules
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
 
 compile: common/index.js
 
-common/index.js: $(TI) $(SRC) node_modules
+common/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
 	npx tsc $(TSCFLAGS)
-	@# smoelius: The modification time of common/index.js is used to indicate the last time that tsc was
+	@# smoelius: Use the modification time of common/index.js to indicate the last time that tsc was
 	@# invoked.
 	touch $@
-	@# $(MAKE) check
 
-post_tsc:
+post_tsc: node_modules
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
@@ -108,10 +107,13 @@ eib/build/contracts/Input_bus.json:
 %-ti.ts: %.ts
 	npx ts-interface-builder $<
 
-node_modules:
+node_modules: package.json
 	npm install
-	@# smoelius: Make @0xproject's tsconfig file happy.
-	echo {} > node_modules/tsconfig.json
+
+# smoelius: Make @0xproject's tsconfig file happy.
+node_modules/tsconfig.json:
+	mkdir -p $$(dirname $@)
+	echo {} > $@
 
 clobber: clean
 	rm -rf node_modules
