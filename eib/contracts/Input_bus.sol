@@ -264,7 +264,7 @@ contract Input_bus {
   
   /*==================================================================================================*/
   
-  uint constant I_FLAG_SUPPLY_SIMULATE = 0;
+  uint public constant I_FLAG_SUPPLY_SIMULATE = 0;
   uint constant N_FLAGS_SUPPLY = 1;
   
   uint256 constant PRE_CALLBACK_OVERHEAD = 726;
