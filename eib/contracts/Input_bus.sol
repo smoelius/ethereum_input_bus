@@ -314,10 +314,14 @@ contract Input_bus {
       callback_result
     );
     
-    // smoelius: The next two deletes are a stop-gap measure until I can find a better way of
-    // communicating the data and proof to the callback.
-    delete req.data;
-    delete req.proof;
+    /* smoelius: DO NOT DO THIS HERE!
+     *
+     *   delete req.data;
+     *   delete req.proof;
+     *
+     * These two deletes introduce a huge refund, which complicates gas cost calculation.  The supplier
+     * is going to experience the refund one way or another.  Let them experience it when the request
+     * is deleted during the payout. */
     
     // smoelius: Use assembly to ensure that the path between the GAS and RETURN instructions is
     // straight-line code.
