@@ -24,19 +24,9 @@ contract Input_bus {
   
   uint256 public constant FLAGS_NONE = 0;
   
-  uint public constant LTIOV_NONE = 0;
-  
-  address public constant PAYEE_DEFAULT = 0;
-  
-  uint constant UNSUPPLY_REQ_ID = 0;
-  
   uint constant G_JUMPDEST = 1;
   
   uint constant C_JUMPDEST = G_JUMPDEST;
-  
-  uint256 constant PRE_CALLBACK_OVERHEAD = 726;
-  uint256 constant POST_CALLBACK_OVERHEAD = 7;
-  uint256 constant PRE_RETURN_OVERHEAD = 265 + C_JUMPDEST;
   
   /*==================================================================================================*
    * Datatypes
@@ -59,20 +49,6 @@ contract Input_bus {
     uint256[] data;
     uint256[] proof;
   }
-  
-  // smoelius: Old.
-  // Desired invariants amongst requestor, FLAG_REQST_CANCELED, supplier, and FLAG_REQST_PAIDOUT:
-  //
-  //   FLAG_REQST_CANCELED ==> requestor != 0
-  //   FLAG_REQST_CANCELED ==> supplier == 0
-  //   FLAG_REQST_CANCELED ==> !FLAG_REQST_PAIDOUT
-  //
-  //   supplier != 0 ==> requestor != 0
-  //   supplier != 0 ==> !FLAG_REQST_CANCELED
-  //
-  //   FLAG_REQST_PAIDOUT ==> requestor != 0
-  //   FLAG_REQST_PAIDOUT ==> !FLAG_REQST_CANCELED
-  //   FLAG_REQST_PAIDOUT ==> supplier != 0
   
   /*==================================================================================================*
    * Data members
@@ -132,6 +108,8 @@ contract Input_bus {
   /*==================================================================================================*
    * Initialize (must be called after the contract is constructed)
    *==================================================================================================*/
+  
+  uint constant UNSUPPLY_REQ_ID = 0;
   
   function initialize() public {
     require(msg.sender == owner);
@@ -204,6 +182,8 @@ contract Input_bus {
   /*==================================================================================================*/
   
   uint constant N_FLAGS_REQUEST = 0;
+  
+  uint public constant LTIOV_NONE = 0;
   
   function request(
       uint256 _flags,
@@ -286,6 +266,10 @@ contract Input_bus {
   
   uint constant I_FLAG_SUPPLY_SIMULATE = 0;
   uint constant N_FLAGS_SUPPLY = 1;
+  
+  uint256 constant PRE_CALLBACK_OVERHEAD = 726;
+  uint256 constant POST_CALLBACK_OVERHEAD = 7;
+  uint256 constant PRE_RETURN_OVERHEAD = 265 + C_JUMPDEST;
   
   function supply(
       uint256 _flags,
@@ -510,6 +494,8 @@ contract Input_bus {
   /*==================================================================================================*/
   
   uint constant N_FLAGS_PAYOUT = 0;
+  
+  address public constant PAYEE_DEFAULT = 0;
   
   function payout(uint256 _flags, uint _req_id, address _payee) public {
     require(mask_left(_flags, 256 - N_FLAGS_PAYOUT) == 0);
