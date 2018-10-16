@@ -34,51 +34,6 @@ contract Proxy_requestor {
   uint256 constant C_RETURNDATACOPY = G_VERYLOW; // smoelius: does not take into account G_COPY
   uint256 constant C_RETURNDATASIZE = G_BASE;
   
-  uint256 constant CALLBACK_NONEMITTING_SELECTION_GAS_COST = 163;
-  uint256 constant CALLBACK_NONEMITTING_INTRO_GAS_COST = 63 + C_JUMP;
-  uint256 constant CALLBACK_NONEMITTING_MAIN_GAS_COST = 293 + C_JUMPDEST;
-  // smoelius: I am not sure that the next value is correct---it is my best guess.
-  uint256 constant CALLBACK_NONEMITTING_MEMORY_GAS_COST = 3 * G_MEMORY;
-  
-  uint256 constant CALLBACK_NONEMITTING_GAS_COST =
-      CALLBACK_NONEMITTING_SELECTION_GAS_COST
-    + CALLBACK_NONEMITTING_INTRO_GAS_COST
-    + CALLBACK_NONEMITTING_MAIN_GAS_COST
-    + CALLBACK_NONEMITTING_MEMORY_GAS_COST
-  ;
-  
-  uint256 constant CALLBACK_EMITTING_SELECTION_GAS_COST = 75;
-  uint256 constant CALLBACK_EMITTING_INTRO_GAS_COST = 63 + C_JUMP;
-  // smoelius: The next value does not take into account G_COPY, G_LOGDATA, nor the costs of calling
-  // get_supplier, get_data, and get_proof.
-  uint256 constant CALLBACK_EMITTING_MAIN_GAS_COST = 4803 + C_JUMPDEST
-    + C_RETURNDATACOPY + G_COPY           // smoelius: get_supplier
-    + C_RETURNDATACOPY + C_RETURNDATASIZE // smoelius: get_data, G_COPY accounted for below
-    + C_RETURNDATACOPY + C_RETURNDATASIZE // smoelius: get_proof, G_COPY accounted for below
-    + 4 * G_SHA3WORD
-  ;
-  uint256 constant CALLBACK_EMITTING_COPY = 2;
-  uint256 constant CALLBACK_EMITTING_LOG = 13;
-  uint256 constant CALLBACK_EMITTING_MEMORY = 17;
-  
-  // smoelius: The gas costs of get_supplier, get_data, and get_proof were determined experimentally.
-  // Each of the latter two contains a loop, so it would be difficult to determine their gas costs
-  // using sum_opcode_gas_costs.sh, etc.  Moreover, I think that some form of loop/recursion is
-  // necessary.
-  
-  uint256 constant PRE_GETTER_OVERHEAD = 721;
-  uint256 constant POST_GETTER_OVERHEAD = 4;
-  
-  uint256 constant GET_SUPPLIER_GAS_COST = 1086;
-  
-  uint256 constant GET_DATA_SELECTION_GAS_COST = 141;
-  uint256 constant GET_PROOF_SELECTION_GAS_COST = 163;
-  
-  uint256 constant GETTER_BASE_A   = 331;
-  uint256 constant GETTER_BASE_B   = 1267;
-  uint256 constant GETTER_MEMORY_A = 2;
-  uint256 constant GETTER_MEMORY_B = 7;
-  
   /*==================================================================================================*
    * Data members
    *==================================================================================================*/
@@ -142,8 +97,22 @@ contract Proxy_requestor {
     );
   }
   
-  // smoelius: Make callback_nonemitting and callback_emitting payable to eliminate a CALLVALUE check
-  // in each.
+  /*==================================================================================================*/
+  
+  uint256 constant CALLBACK_NONEMITTING_SELECTION_GAS_COST = 163;
+  uint256 constant CALLBACK_NONEMITTING_INTRO_GAS_COST = 63 + C_JUMP;
+  uint256 constant CALLBACK_NONEMITTING_MAIN_GAS_COST = 293 + C_JUMPDEST;
+  // smoelius: I am not sure that the next value is correct---it is my best guess.
+  uint256 constant CALLBACK_NONEMITTING_MEMORY_GAS_COST = 3 * G_MEMORY;
+  
+  uint256 constant CALLBACK_NONEMITTING_GAS_COST =
+      CALLBACK_NONEMITTING_SELECTION_GAS_COST
+    + CALLBACK_NONEMITTING_INTRO_GAS_COST
+    + CALLBACK_NONEMITTING_MAIN_GAS_COST
+    + CALLBACK_NONEMITTING_MEMORY_GAS_COST
+  ;
+  
+  // smoelius: Make callback_nonemitting payable to eliminate a CALLVALUE check.
   
   function callback_nonemitting(uint /* _req_id */) public payable {
     bool fail = msg.sender != address(eib);
@@ -156,10 +125,82 @@ contract Proxy_requestor {
     }
   }
   
-  // smoelius: Use assembly because the code that solc would otherwise emit for callback_emitting is
-  // surprisingly complicated.
+  /*==================================================================================================*/
+  
+  uint256 constant CALLBACK_EMITTING_SELECTION_GAS_COST = 75;
+  uint256 constant CALLBACK_EMITTING_INTRO_GAS_COST = 63 + C_JUMP;
+  // smoelius: The next value does not take into account G_COPY, G_LOGDATA, nor the costs of calling
+  // get_supplier, get_data, and get_proof.
+  uint256 constant CALLBACK_EMITTING_MAIN_GAS_COST = 4803 + C_JUMPDEST
+    + C_RETURNDATACOPY + G_COPY           // smoelius: get_supplier
+    + C_RETURNDATACOPY + C_RETURNDATASIZE // smoelius: get_data, G_COPY accounted for below
+    + C_RETURNDATACOPY + C_RETURNDATASIZE // smoelius: get_proof, G_COPY accounted for below
+    + 4 * G_SHA3WORD
+  ;
+  uint256 constant CALLBACK_EMITTING_COPY = 2;
+  uint256 constant CALLBACK_EMITTING_LOG = 13;
+  uint256 constant CALLBACK_EMITTING_MEMORY = 17;
+  
+  // smoelius: The gas costs of get_supplier, get_data, and get_proof were determined experimentally.
+  // Each of the latter two contains a loop, so it would be difficult to determine their gas costs
+  // using sum_opcode_gas_costs.sh, etc.  Moreover, I think that some form of loop/recursion is
+  // necessary.
+  
+  uint256 constant PRE_GETTER_OVERHEAD = 721;
+  uint256 constant POST_GETTER_OVERHEAD = 4;
+  
+  uint256 constant GET_SUPPLIER_SELECTION_GAS_COST = 273;
+  uint256 constant GET_DATA_SELECTION_GAS_COST = 141;
+  uint256 constant GET_PROOF_SELECTION_GAS_COST = 163;
+  
+  uint256 constant GET_SUPPLIER_INTRO_MAIN_GAS_COST = 813;
+  
+  function callback_emitting_gas_cost(
+      uint256 /* _flags */,
+      Input_bus.file_address_type _file_addr_type,
+      uint256[] _file_addr,
+      uint128 _start,
+      uint128 _end,
+      uint /* _ltiov */
+  ) public pure returns(uint256) {
+    assert(_file_addr_type == Input_bus.file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT);
+    assert(_file_addr.length == 3);
+    uint128 data_length = calculate_data_length(uint128(_file_addr[1]), _start, _end);
+    uint128 proof_length = calculate_proof_length(_start, _end, uint128(_file_addr[1]));
+    uint128 data_proof_length = data_length + proof_length;
+    return
+        CALLBACK_EMITTING_SELECTION_GAS_COST
+      + CALLBACK_EMITTING_INTRO_GAS_COST
+      + CALLBACK_EMITTING_MAIN_GAS_COST
+        + GET_SUPPLIER_SELECTION_GAS_COST + GET_SUPPLIER_INTRO_MAIN_GAS_COST
+        + GET_DATA_SELECTION_GAS_COST + getter_gas_cost(data_length)
+        + GET_PROOF_SELECTION_GAS_COST + getter_gas_cost(proof_length)
+        + G_COPY * (CALLBACK_EMITTING_COPY + data_proof_length)
+        + G_LOGDATA * (CALLBACK_EMITTING_LOG + data_proof_length) * 32
+      + G_MEMORY * (CALLBACK_EMITTING_MEMORY + data_proof_length)
+      + square(CALLBACK_EMITTING_MEMORY + data_proof_length) / 512
+    ;
+  }
+  
+  uint256 constant GETTER_BASE_A   = 331;
+  uint256 constant GETTER_BASE_B   = 1267;
+  uint256 constant GETTER_MEMORY_A = 2;
+  uint256 constant GETTER_MEMORY_B = 7;
+  
+  function getter_gas_cost(uint length) private pure returns(uint256) {
+    return
+        GETTER_BASE_A * length
+      + GETTER_BASE_B
+      + square(GETTER_MEMORY_A * length + GETTER_MEMORY_B) / 512
+    ;
+  }
+  
+  // smoelius: Make callback_emitting payable to eliminate a CALLVALUE check.
   
   function callback_emitting(uint _req_id) public payable {
+    // smoelius: Use assembly because the code that solc would otherwise emit for callback_emitting is
+    // surprisingly complicated.
+    
     uint256 block_gas_limit = BLOCK_GAS_LIMIT;
     address eib_address = address(eib);
     uint256 pre_getter_overhead = PRE_GETTER_OVERHEAD;
@@ -241,40 +282,7 @@ contract Proxy_requestor {
     }
   }
   
-  function callback_emitting_gas_cost(
-      uint256 /* _flags */,
-      Input_bus.file_address_type _file_addr_type,
-      uint256[] _file_addr,
-      uint128 _start,
-      uint128 _end,
-      uint /* _ltiov */
-  ) public pure returns(uint256) {
-    assert(_file_addr_type == Input_bus.file_address_type.IPFS_WITH_KECCAK256_MERKLE_ROOT);
-    assert(_file_addr.length == 3);
-    uint128 data_length = calculate_data_length(uint128(_file_addr[1]), _start, _end);
-    uint128 proof_length = calculate_proof_length(_start, _end, uint128(_file_addr[1]));
-    uint128 data_proof_length = data_length + proof_length;
-    return
-        CALLBACK_EMITTING_SELECTION_GAS_COST
-      + CALLBACK_EMITTING_INTRO_GAS_COST
-      + CALLBACK_EMITTING_MAIN_GAS_COST
-        + GET_SUPPLIER_GAS_COST
-        + GET_DATA_SELECTION_GAS_COST + getter_gas_cost(data_length)
-        + GET_PROOF_SELECTION_GAS_COST + getter_gas_cost(proof_length)
-        + G_COPY * (CALLBACK_EMITTING_COPY + data_proof_length)
-        + G_LOGDATA * (CALLBACK_EMITTING_LOG + data_proof_length) * 32
-      + G_MEMORY * (CALLBACK_EMITTING_MEMORY + data_proof_length)
-      + square(CALLBACK_EMITTING_MEMORY + data_proof_length) / 512
-    ;
-  }
-  
-  function getter_gas_cost(uint length) private pure returns(uint256) {
-    return
-        GETTER_BASE_A * length
-      + GETTER_BASE_B
-      + square(GETTER_MEMORY_A * length + GETTER_MEMORY_B) / 512
-    ;
-  }
+  /*==================================================================================================*/
   
   // smoelius: calculate_data_length and calculate_proof_length will likely move to another file.
   

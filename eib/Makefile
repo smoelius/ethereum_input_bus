@@ -20,6 +20,7 @@ GREP := grep --color=auto
       check_callback_emitting_main_gas_cost \
       check_callback_emitting_pre_getter_overhead \
       check_callback_emitting_post_getter_overhead \
+      check_get_supplier_selection_gas_cost \
       check_get_data_selection_gas_cost \
       check_get_proof_selection_gas_cost \
   test clean
@@ -109,6 +110,7 @@ check_callback_emitting_gas_costs: \
     check_callback_emitting_main_gas_cost \
     check_callback_emitting_pre_getter_overhead \
     check_callback_emitting_post_getter_overhead \
+    check_get_supplier_selection_gas_cost \
     check_get_data_selection_gas_cost \
     check_get_proof_selection_gas_cost
 
@@ -143,6 +145,12 @@ check_callback_emitting_post_getter_overhead: Proxy_requestor_opcodes.txt
 	$(GREP) -- "\<POST_GETTER_OVERHEAD = $$(../scripts/sum_opcode_gas_costs.sh \
 	    '\<INVALID\>\|\<JUMP\>' \
 	    '.*\<CALL\>\(.*\<GAS\>\)' < $< \
+	  )\>" \
+	  contracts/Proxy_requestor.sol
+
+check_get_supplier_selection_gas_cost: Input_bus_opcodes.txt
+	$(GREP) -- "\<GET_SUPPLIER_SELECTION_GAS_COST = $$(../scripts/selection_gas_cost.sh \
+	    'get_supplier(uint256)' < $< \
 	  )\>" \
 	  contracts/Proxy_requestor.sol
 
