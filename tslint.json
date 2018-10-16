@@ -6,6 +6,7 @@
   "jsRules": {},
   "rules": {
     "align": false,
+    "arrow-parens": [true, "ban-single-arg-parens"],
     "class-name": false,
     "forin": false,
     "interface-name": false,

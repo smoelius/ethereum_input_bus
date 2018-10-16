@@ -67,7 +67,7 @@ export function handle_receipt_events(promised_receipt: Promise<types.Transactio
 
     let found = false
     for (const abi_event_callback of abi_event_callbacks) {
-      parse(receipt.logs, abi_event_callback.abi).forEach((log) => {
+      parse(receipt.logs, abi_event_callback.abi).forEach(log => {
         const event = log as types.DecodedLogEntry<any>
         for (const event_callback of abi_event_callback.event_callbacks) {
           if (event.event === event_callback.event) {
@@ -78,7 +78,7 @@ export function handle_receipt_events(promised_receipt: Promise<types.Transactio
     }
 
     assert(found)
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }
@@ -93,13 +93,13 @@ export function handle_block_events(web3: Web3, filter_value: string | types.Fil
       throw err
     }
     for (const abi_event_callback of abi_event_callbacks) {
-      parse([log], abi_event_callback.abi).forEach((log) => {
+      parse([log], abi_event_callback.abi).forEach(log => {
         (async () => {
           const event = log as types.DecodedLogEntry<any>
           for (const event_callback of abi_event_callback.event_callbacks) {
             if (event.event === event_callback.event) {
               const receipt = await promisify<types.TransactionReceipt | null>(
-                (callback) => web3.eth.getTransactionReceipt(log.transactionHash, callback))
+                callback => web3.eth.getTransactionReceipt(log.transactionHash, callback))
               if (receipt === null) {
                 return assert(false)
               }
@@ -108,7 +108,7 @@ export function handle_block_events(web3: Web3, filter_value: string | types.Fil
               }
             }
           }
-        })().catch((err) => {
+        })().catch(err => {
           throw err
         })
       })
@@ -122,7 +122,7 @@ export function handle_block_events(web3: Web3, filter_value: string | types.Fil
 export function parse(logs: types.LogEntry[], abi: types.ContractAbi):
     Array<types.LogEntry | types.DecodedLogEntry<any>> {
   // smoelius: logParser modifies the logs!!!
-  return logs.map((log) => log.hasOwnProperty("event") ? log : logParser([log], abi)[0])
+  return logs.map(log => log.hasOwnProperty("event") ? log : logParser([log], abi)[0])
 }
 
 /*====================================================================================================*

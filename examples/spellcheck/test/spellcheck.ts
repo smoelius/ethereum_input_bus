@@ -65,7 +65,7 @@ describe("spellcheck tests", function(): void {
     [false, "zyzzyvat"],
     [true,  "pneumonoultramicroscopicsilicovolcanoconiosis"],
     [false, "A".repeat(91)],
-  ].forEach((p) => test(p[0] as boolean, p[1] as string))
+  ].forEach(p => test(p[0] as boolean, p[1] as string))
 })
 
 /*====================================================================================================*/
@@ -75,13 +75,13 @@ function test(valid: boolean, word: string): void {
   let balance = new BigNumber(0)
   let sc_id: BigNumber
   let unspent_value: BigNumber
-  it("should " + (valid ? "" : "NOT ") + "find \"" + word + "\"", (done) => {
+  it("should " + (valid ? "" : "NOT ") + "find \"" + word + "\"", done => {
     // smoelius: n_reqs and balance must be recorded inside the callback because there are no
     // guarantees as to when the callback will be called.
     n_reqs = sc.n_reqs()
     balance = web3.eth.getBalance(sc.address)
     const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
-      (callback) => web3.eth.getTransactionReceipt(sc.spellcheck(
+      callback => web3.eth.getTransactionReceipt(sc.spellcheck(
         word,
         {
           value: "10e15", // 10 milliether
@@ -112,7 +112,7 @@ function test(valid: boolean, word: string): void {
                 abi: sc.abi,
                 event_callbacks: [{
                   event: "Spellcheck_update",
-                  callback: (event) => {
+                  callback: event => {
                     const sc_update = sc_guard.Spellcheck_update(event)
                     if (!sc_id.equals(sc_update.sc_id)) {
                       return false
@@ -124,7 +124,7 @@ function test(valid: boolean, word: string): void {
                   }
                 }, {
                   event: "Spellcheck_end",
-                  callback: (event) => {
+                  callback: event => {
                     const sc_end = sc_guard.Spellcheck_end(event)
                     if (!sc_id.equals(sc_end.sc_id)) {
                       return false
@@ -146,13 +146,13 @@ function test(valid: boolean, word: string): void {
       }]
     )
   })
-  it("should have returned to original number of requests (" + n_reqs + ")", (done) => {
+  it("should have returned to original number of requests (" + n_reqs + ")", done => {
     assert(sc.n_reqs().equals(n_reqs))
     done()
   })
-  it("should refund unspent value for \"" + word + "\"", (done) => {
+  it("should refund unspent value for \"" + word + "\"", done => {
     const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
-      (callback) => web3.eth.getTransactionReceipt(sc.refund(
+      callback => web3.eth.getTransactionReceipt(sc.refund(
         sc_id,
         {
           gas: REFUND_GAS
@@ -166,7 +166,7 @@ function test(valid: boolean, word: string): void {
         abi: sc.abi,
         event_callbacks: [{
           event: "Spellcheck_refund",
-          callback: (event) => {
+          callback: event => {
             const sc_refund = sc_guard.Spellcheck_refund(event)
             if (!sc_id.equals(sc_refund.sc_id)) {
               return false
@@ -179,7 +179,7 @@ function test(valid: boolean, word: string): void {
       }]
     )
   })
-  it("should have returned to original balance (" + balance + ")", (done) => {
+  it("should have returned to original balance (" + balance + ")", done => {
     assert(web3.eth.getBalance(sc.address).equals(balance))
     done()
   })

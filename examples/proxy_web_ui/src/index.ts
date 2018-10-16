@@ -69,12 +69,12 @@ window.addEventListener("load", () => {
       web.save("end")
       web.save("value")
     }
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 })
 
-window.addEventListener("keyup", (event) => {
+window.addEventListener("keyup", event => {
   const request_container = web.as_get<HTMLElement>("request_container")
   if (event.keyCode === 13 && window.getComputedStyle(request_container).visibility === "visible") {
     request()
@@ -124,7 +124,7 @@ function request(): void {
     ]
 
     const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>((callback) => proxy.request(
+    const tx_hash = await eth.promisify<string>(callback => proxy.request(
       EIB.FLAGS_NONE,
       EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
       file_addr,
@@ -143,7 +143,7 @@ function request(): void {
     ))
     eth.handle_receipt_events(
       eth.promisify<types.TransactionReceipt | null>(
-        (callback) => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+        callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
       [{
         abi: Input_bus_artifacts.abi,
         event_callbacks: [{
@@ -175,7 +175,7 @@ function request(): void {
                       .map(conversion.buffer_from_uint256).slice(0, Number(end) - Number(start)))
                     hex = data.toString("hex").split("").map((x, i) => i % 2 === 0 ? x : x + " ")
                       .join("")
-                    ascii = new Buffer(data.map((x) => x < 32 || x > 126 ? 46 /* '.' */ : x))
+                    ascii = new Buffer(data.map(x => x < 32 || x > 126 ? 46 /* '.' */ : x))
                       .toString("ascii").split("").map(web.escape_char)
                     redisplay()
                     stop()
@@ -188,13 +188,13 @@ function request(): void {
           }
         }]
       }],
-      (found) => {
+      found => {
         if (!found) {
           return stop_with_error(true, "Could not find request announcement event.")
         }
       }
     )
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }
@@ -247,7 +247,7 @@ function stop(): void {
 
     web.show("cancel_container", false)
     web.show("request_container", true)
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }

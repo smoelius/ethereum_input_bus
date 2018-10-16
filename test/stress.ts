@@ -59,9 +59,9 @@ export function stress(context: Test_context): void {
         const proof = merkle.extract_proof(start, end, file_info.file_length, file_info.merkle_tree)
         let block_number: number
         let request: interfaces.Request_announced
-        it(title("should announce request", start, end), (done) => {
+        it(title("should announce request", start, end), done => {
           const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
-            (callback) => context.web3.eth.getTransactionReceipt(context.proxy.request(
+            callback => context.web3.eth.getTransactionReceipt(context.proxy.request(
               EIB.FLAGS_NONE,
               EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
               file_addr,
@@ -109,14 +109,14 @@ export function stress(context: Test_context): void {
             : math.negate_bit_big(x, 0))
           // smoelius: The next several statements are useful for testing negate_bit_big.  These should
           // be their own unit tests.
-          /* console.log(`data:                    ${data.map((x) => x.toString(16))}`)
-          console.log(`data_negated_first_bit:  ${data_negated_first_bit.map((x) => x.toString(16))}`)
-          console.log(`data_negated_last_bit:   ${data_negated_last_bit.map((x) => x.toString(16))}`)
-          console.log(`proof:                   ${proof.map((x) => x.toString(16))}`)
-          console.log(`proof_negated_first_bit: ${proof_negated_first_bit.map((x) => x.toString(16))}`)
-          console.log(`proof_negated_last_bit:  ${proof_negated_last_bit.map((x) => x.toString(16))}`)
+          /* console.log(`data:                    ${data.map(x => x.toString(16))}`)
+          console.log(`data_negated_first_bit:  ${data_negated_first_bit.map(x => x.toString(16))}`)
+          console.log(`data_negated_last_bit:   ${data_negated_last_bit.map(x => x.toString(16))}`)
+          console.log(`proof:                   ${proof.map(x => x.toString(16))}`)
+          console.log(`proof_negated_first_bit: ${proof_negated_first_bit.map(x => x.toString(16))}`)
+          console.log(`proof_negated_last_bit:  ${proof_negated_last_bit.map(x => x.toString(16))}`)
           // */
-          it(title("should fail to supply request with data first bit negated", start, end), (done) => {
+          it(title("should fail to supply request with data first bit negated", start, end), done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -130,7 +130,7 @@ export function stress(context: Test_context): void {
               done()
             }
           })
-          it(title("should fail to supply request with data last bit negated", start, end), (done) => {
+          it(title("should fail to supply request with data last bit negated", start, end), done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -145,7 +145,7 @@ export function stress(context: Test_context): void {
             }
           })
           it(title("should fail to supply request with proof first bit negated", start, end),
-              (done) => {
+              done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -159,7 +159,7 @@ export function stress(context: Test_context): void {
               done()
             }
           })
-          it(title("should fail to supply request with proof last bit negated", start, end), (done) => {
+          it(title("should fail to supply request with proof last bit negated", start, end), done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -174,7 +174,7 @@ export function stress(context: Test_context): void {
             }
           })
           it(title("should fail to supply request with data and proof first bit negated", start, end),
-              (done) => {
+              done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -189,7 +189,7 @@ export function stress(context: Test_context): void {
             }
           })
           it(title("should fail to supply request with data and proof last bit negated", start, end),
-              (done) => {
+              done => {
             try {
               context.eib.supply(
                 EIB.FLAGS_NONE,
@@ -204,7 +204,7 @@ export function stress(context: Test_context): void {
             }
           })
         }
-        it(title("should supply request", start, end), (done) => {
+        it(title("should supply request", start, end), done => {
           let n_events_handled = 0
           const almost_done = () => {
             n_events_handled++
@@ -278,7 +278,7 @@ export function stress(context: Test_context): void {
             }]
           )
         })
-        it(title("should payout request", start, end), (done) => {
+        it(title("should payout request", start, end), done => {
           context.handle_events(() => context.eib.payout(
               EIB.FLAGS_NONE,
               request.req_id,

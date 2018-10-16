@@ -65,7 +65,7 @@ if (path !== undefined) {
 
 let file: Buffer = new Buffer(0)
 
-stream.on("data", (chunk) => {
+stream.on("data", chunk => {
   file = Buffer.concat([file, chunk])
 }).on("end", () => {
   const file_info = common.get_file_info(file)

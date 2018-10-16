@@ -92,7 +92,7 @@ function test_handle_events(context: Test_context): (
   return (thunk, filter_value, abi_event_callbacks) => {
     if (!(context.options.external_supplier === true)) {
       const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
-        (callback) => context.web3.eth.getTransactionReceipt(thunk(), callback))
+        callback => context.web3.eth.getTransactionReceipt(thunk(), callback))
       eth.handle_receipt_events(promised_receipt, abi_event_callbacks)
     } else {
       eth.handle_block_events(context.web3, filter_value, abi_event_callbacks)

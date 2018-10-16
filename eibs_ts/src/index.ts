@@ -149,7 +149,7 @@ node.on("ready", () => {
       abi: eib.abi,
       event_callbacks: [{
         event: "Request_announced",
-        callback: (event) => {
+        callback: event => {
           const request = common.guard.Request_announced(event)
           log_event(chalk.bold.red, "Request_announced", request)
           const ipfs_hash = common.ipfs_multihash_from_uint256(request.file_addr[0])
@@ -211,7 +211,7 @@ node.on("ready", () => {
 
       {
         event: "Request_canceled",
-        callback: (event) => {
+        callback: event => {
           const cancellation = common.guard.Request_canceled(event)
           log_event(chalk.bold.yellow, "Request_canceled", cancellation)
           return false
@@ -220,7 +220,7 @@ node.on("ready", () => {
 
       {
         event: "Request_supplied",
-        callback: (event) => {
+        callback: event => {
           const supplement = common.guard.Request_supplied(event)
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
@@ -249,7 +249,7 @@ node.on("ready", () => {
 
       {
         event: "Request_paidout",
-        callback: (event) => {
+        callback: event => {
           const payout = common.guard.Request_paidout(event)
           log_event(chalk.bold.magenta, "Request_paidout", payout)
           return false

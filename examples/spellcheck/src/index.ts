@@ -105,12 +105,12 @@ window.addEventListener("load", () => {
       web.save("word")
       web.save("value")
     }
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 })
 
-window.addEventListener("keyup", (event) => {
+window.addEventListener("keyup", event => {
   const spellcheck_container = web.as_get<HTMLElement>("spellcheck_container")
   if (event.keyCode === 13 && window.getComputedStyle(spellcheck_container).visibility === "visible") {
     spellcheck()
@@ -155,7 +155,7 @@ function spellcheck(): void {
     web.show("cancel_container", true)
 
     const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>((callback) => window.sc.spellcheck(
+    const tx_hash = await eth.promisify<string>(callback => window.sc.spellcheck(
       word,
       {
         from: accounts[0],
@@ -167,7 +167,7 @@ function spellcheck(): void {
     ))
     eth.handle_receipt_events(
       eth.promisify<types.TransactionReceipt | null>(
-        (callback) => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+        callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
       [{
         abi: window.sc.abi,
         event_callbacks: [{
@@ -185,13 +185,13 @@ function spellcheck(): void {
           }
         }]
       }],
-      (found) => {
+      found => {
         if (!found) {
           return stop_with_error(true, "Could not spellcheck initiation event.")
         }
       }
     )
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }
@@ -246,7 +246,7 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
                 }
               }]
             }],
-            (found) => {
+            found => {
               if (!found) {
                 return stop_with_error(true, "Could not find request announcement event.")
               }
@@ -274,7 +274,7 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
         }
       }]
     }],
-    (found) => {
+    found => {
       if (!found) {
         return stop_with_error(true, "Could not find spellcheck update/end event.")
       }
@@ -295,7 +295,7 @@ function update_gas_used(receipt: types.TransactionReceipt): void {
 function refund(sc_init: sc_interfaces.Spellcheck_init): void {
   (async () => {
     const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>((callback) => window.sc.refund(
+    const tx_hash = await eth.promisify<string>(callback => window.sc.refund(
       sc_init.sc_id,
       {
         from: sc_init.requestor,
@@ -305,12 +305,12 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): void {
       callback
     ))
     eth.handle_receipt_events(
-      eth.promisify((callback) => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+      eth.promisify(callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
       [{
         abi: window.sc.abi,
         event_callbacks: [{
           event: "Spellcheck_refund",
-          callback: (event) => {
+          callback: event => {
             const sc_refund = sc_guard.Spellcheck_refund(event)
             if (!sc_init.sc_id.equals(sc_refund.sc_id)) {
               return false
@@ -322,13 +322,13 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): void {
           }
         }]
       }],
-      (found) => {
+      found => {
         if (!found) {
           return stop_with_error(true, "Could not find spellcheck refund event.")
         }
       }
     )
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }
@@ -358,7 +358,7 @@ function stop(): void {
 
     web.show("cancel_container", false)
     web.show("spellcheck_container", true)
-  })().catch((err) => {
+  })().catch(err => {
     throw err
   })
 }
