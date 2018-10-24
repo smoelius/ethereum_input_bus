@@ -1,8 +1,9 @@
 #======================================================================================================#
-# Makefile for Ethereum Input Bus implemented in Solidity
+# Makefile for EIB contracts
 #======================================================================================================#
 
 GREP := grep --color=auto
+NPX  := npx --no-install
 
 .PHONY: all deploy pre_tsc post_tsc compile \
   check \
@@ -30,7 +31,7 @@ GREP := grep --color=auto
 all: pre_tsc post_tsc
 
 deploy:
-	npx truffle deploy
+	$(NPX) truffle deploy
 
 pre_tsc:
 
@@ -41,7 +42,7 @@ compile: build/contracts/Input_bus.json \
          build/contracts/Proxy_requestor.json
 
 build/contracts/%.json: contracts/%.sol
-	npx truffle compile
+	$(NPX) truffle compile
 
 #======================================================================================================#
 
@@ -169,15 +170,15 @@ check_get_proof_selection_gas_cost: Input_bus_opcodes.txt
 #======================================================================================================#
 
 Input_bus_opcodes.txt: build/contracts/Input_bus.json
-	npx truffle opcode Input_bus | grep '^[0-9]\+:' > $@
+	$(NPX) truffle opcode Input_bus | grep '^[0-9]\+:' > $@
 
 Proxy_requestor_opcodes.txt: build/contracts/Proxy_requestor.json
-	npx truffle opcode Proxy_requestor | grep '^[0-9]\+:' > $@
+	$(NPX) truffle opcode Proxy_requestor | grep '^[0-9]\+:' > $@
 
 #======================================================================================================#
 
 test:
-	npx mocha
+	$(NPX) mocha
 
 clean:
 	rm -f Input_bus_opcodes.txt

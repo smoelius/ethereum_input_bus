@@ -2,7 +2,9 @@
 # Makefile for Spellcheck
 #======================================================================================================#
 
-WEBPACKFLAGS := --mode=development
+GREP    := grep --color=auto
+NPX     := npx --no-install
+WEBPACK := webpack --mode=development
 
 JSON := eib_build/contracts/Input_bus.json \
         build/contracts/Migrations.json \
@@ -18,7 +20,7 @@ all: pre_tsc post_tsc
 # smoelius: deploy requires that Dict.sol be generated.  (Since deploy will overwrite *.json, there is
 # likely a better way to organize this Makefile.)
 deploy: Dict.sol
-	npx truffle deploy
+	$(NPX) truffle deploy
 
 # smoelius: Note that "compile" cannot be a pre_tsc dependency because the contents of the util
 # directory must be tsc-compiled before generate_dict_sol.sh can be run.
@@ -27,15 +29,15 @@ pre_tsc:
 post_tsc: dist/main.js
 
 dist/main.js: src/index.js $(JSON)
-	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $<)
+	$(NPX) $(WEBPACK) $(addprefix ./, $<)
 
 compile: $(JSON)
 
 build/contracts/%.json: contracts/%.sol Dict.sol
-	npx truffle compile
+	$(NPX) truffle compile
 
 build/contracts/Dict.json: Dict.sol
-	npx truffle compile
+	$(NPX) truffle compile
 
 Dict.sol: words.sorted
 	./generate_dict_sol.sh $< > $@ || (rm -f $@ && false)
@@ -49,7 +51,7 @@ words-3.0-22.el7.noarch.rpm:
 check:
 
 test:
-	mocha
+	$(NPX) mocha
 
 clobber: clean
 	rm -f Dict.sol

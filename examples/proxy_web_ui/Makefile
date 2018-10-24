@@ -1,8 +1,9 @@
 #======================================================================================================#
-# Makefile for proxy_web_ui
+# Makefile for Proxy Web UI
 #======================================================================================================#
 
-WEBPACKFLAGS := --mode=development
+NPX     := npx --no-install
+WEBPACK := webpack --mode=development
 
 JSON := build/contracts/Input_bus.json \
         build/contracts/Proxy_requestor.json
@@ -18,7 +19,7 @@ pre_tsc:
 post_tsc: dist/main.js
 
 dist/main.js: src/index.js $(JSON)
-	npx webpack $(WEBPACKFLAGS) $(addprefix ./, $<)
+	$(NPX) $(WEBPACK) $(addprefix ./, $<)
 
 check:
 

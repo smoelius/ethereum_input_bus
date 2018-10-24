@@ -8,9 +8,9 @@
 # * Node modules are shared amongst the subprojects, i.e., there is only one node_modules folder.
 #======================================================================================================#
 
-TSCFLAGS := # --traceResolution
-
 GREP := grep --color=auto
+NPX  := npx --no-install
+TSC  := tsc # --traceResolution
 
 TI := common/src/interfaces-ti.ts \
       eibs_ts/src/interfaces-ti.ts \
@@ -45,6 +45,7 @@ SRC := $(filter-out %-ti.ts, \
 all: pre_tsc compile post_tsc
 
 pre_tsc: node_modules
+	$(MAKE) -C common $@
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
@@ -52,13 +53,13 @@ pre_tsc: node_modules
 compile: common/src/index.js
 
 common/src/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
-	npx tsc $(TSCFLAGS)
+	$(NPX) $(TSC)
 	@# smoelius: Use the modification time of common/src/index.js to indicate the last time that tsc was
 	@# invoked.
 	touch $@
 
 %-ti.ts: %.ts
-	npx ts-interface-builder $<
+	$(NPX) ts-interface-builder $<
 
 node_modules: package.json
 	npm install
@@ -69,6 +70,7 @@ node_modules/tsconfig.json:
 	echo {} > $@
 
 post_tsc: node_modules
+	$(MAKE) -C common $@
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@

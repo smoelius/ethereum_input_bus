@@ -2,6 +2,8 @@
 # Makefile for EIB common files
 #======================================================================================================#
 
+NPX := npx --no-install
+
 .PHONY: all pre_tsc post_tsc check test clean
 
 #======================================================================================================#
@@ -15,7 +17,7 @@ post_tsc:
 check:
 
 test:
-	npx mocha
+	$(NPX) mocha
 
 clean:
 
