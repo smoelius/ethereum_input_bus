@@ -8,7 +8,7 @@ WEBPACK := webpack --mode=development
 JSON := build/contracts/Input_bus.json \
         build/contracts/Proxy_requestor.json
 
-.PHONY: all pre_tsc post_tsc check clean
+.PHONY: all pre_tsc post_tsc check test clean
 
 #======================================================================================================#
 
@@ -22,6 +22,8 @@ dist/main.js: src/index.js $(JSON)
 	$(NPX) $(WEBPACK) $(addprefix ./, $<)
 
 check:
+
+test:
 
 clean:
 	rm -f dist/main.js

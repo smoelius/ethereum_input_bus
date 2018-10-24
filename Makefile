@@ -33,7 +33,7 @@ SRC := $(filter-out %-ti.ts, \
       check_unsupply_selection_gas_cost \
       check_unsupply_intro_gas_cost \
       check_unsupply_main_gas_cost \
-  clobber clean
+  test clobber clean
 
 # From: https://www.gnu.org/software/make/manual/html_node/Special-Targets.html
 # .SECONDARY with no prerequisites causes all targets to be treated as secondary (i.e., no target is
@@ -116,6 +116,12 @@ eib/build/contracts/Input_bus.json:
 	$(MAKE) -C eib build/contracts/Input_bus.json
 
 #======================================================================================================#
+
+test:
+	$(MAKE) -C common $@
+	$(MAKE) -C eib $@
+	$(MAKE) -C eibs_ts $@
+	$(MAKE) -C examples $@
 
 clobber: clean
 	rm -rf node_modules
