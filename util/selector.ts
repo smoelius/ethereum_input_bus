@@ -2,7 +2,8 @@
  * selector.ts
  *====================================================================================================*/
 
-import { program_invocation_short_name, selector } from "../common"
+import { program_invocation_short_name } from "../common/src/err"
+import { selector } from "../common/src/eth"
 
 /*====================================================================================================*/
 

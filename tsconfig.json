@@ -1,10 +1,10 @@
 {
   "include": [
-    "common/*",
+    "common/src/*",
+    "common/test/*",
     "eib/public/*",
     "eib/test/*",
     "eibs_ts/src/*",
-    "eibs_ts/test/*",
     "examples/*/src/*",
     "examples/*/test/*",
     "util/*"

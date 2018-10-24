@@ -1,8 +1,8 @@
 #======================================================================================================#
-# Makefile for prototype Ethereum Input Bus supplier implemented in TypeScript
+# Makefile for EIB common files
 #======================================================================================================#
 
-.PHONY: all pre_tsc post_tsc check run test clean
+.PHONY: all pre_tsc post_tsc check test clean
 
 #======================================================================================================#
 
@@ -15,13 +15,8 @@ post_tsc:
 check:
 
 test:
-	EIB_EXTERNAL_SUPPLIER=1 npx mocha
-
-run:
-	mkdir -p disk_cache
-	node src/index.js --debug --mem-cache --disk-cache disk_cache
+	npx mocha
 
 clean:
-	rm -f disk_cache/*
 
 #======================================================================================================#

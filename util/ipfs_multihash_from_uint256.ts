@@ -3,7 +3,8 @@
  *====================================================================================================*/
 
 import { BigNumber } from "bignumber.js"
-import { ipfs_multihash_from_uint256, program_invocation_short_name } from "../common"
+import { ipfs_multihash_from_uint256 } from "../common/src/conversion"
+import { program_invocation_short_name } from "../common/src/err"
 
 /*====================================================================================================*/
 

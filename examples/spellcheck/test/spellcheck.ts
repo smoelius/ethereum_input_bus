@@ -7,7 +7,7 @@ import { BigNumber } from "bignumber.js"
 import types = require("ethereum-types")
 import fs from "fs"
 import Web3 from "web3"
-import * as eth from "../../../common/eth"
+import * as eth from "../../../common/src/eth"
 import { guard as sc_guard } from "../src/guard"
 
 /*====================================================================================================*/

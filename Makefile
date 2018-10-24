@@ -3,7 +3,7 @@
 #======================================================================================================#
 # smoelius: I am not sure that the present way is the best way to organize the project.  However, the
 # present way has the following advantages.
-# * Changes to common/*.ts are recognized as necessitating the recompilation of eib/test/*.ts,
+# * Changes to common/src/*.ts are recognized as necessitating the recompilation of eib/test/*.ts,
 #   eibs_ts/src/*.ts, etc.
 # * Node modules are shared amongst the subprojects, i.e., there is only one node_modules folder.
 #======================================================================================================#
@@ -12,19 +12,18 @@ TSCFLAGS := # --traceResolution
 
 GREP := grep --color=auto
 
-TI := common/interfaces-ti.ts \
+TI := common/src/interfaces-ti.ts \
       eibs_ts/src/interfaces-ti.ts \
       examples/spellcheck/src/interfaces-ti.ts
 
 SRC := $(filter-out %-ti.ts, \
-         $(wildcard common/*.ts) \
+         $(wildcard common/src/*.ts) \
+         $(wildcard common/test/*.ts) \
          $(wildcard eib/public/*.ts) \
          $(wildcard eib/test/*.ts) \
          $(wildcard eibs_ts/src/*.ts) \
-         $(wildcard eibs_ts/test/*.ts) \
          $(wildcard examples/*/src/*.ts) \
          $(wildcard examples/*/test/*.ts) \
-         $(wildcard test/*.ts) \
          $(wildcard util/*.ts) \
        )
 
@@ -50,13 +49,24 @@ pre_tsc: node_modules
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
 
-compile: common/index.js
+compile: common/src/index.js
 
-common/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
+common/src/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
 	npx tsc $(TSCFLAGS)
-	@# smoelius: Use the modification time of common/index.js to indicate the last time that tsc was
+	@# smoelius: Use the modification time of common/src/index.js to indicate the last time that tsc was
 	@# invoked.
 	touch $@
+
+%-ti.ts: %.ts
+	npx ts-interface-builder $<
+
+node_modules: package.json
+	npm install
+
+# smoelius: Make @0xproject's tsconfig file happy.
+node_modules/tsconfig.json:
+	mkdir -p $$(dirname $@)
+	echo {} > $@
 
 post_tsc: node_modules
 	$(MAKE) -C eib $@
@@ -69,6 +79,7 @@ lint:
 #======================================================================================================#
 
 check: check_unsupply_gas_costs
+	$(MAKE) -C common $@
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@
@@ -104,34 +115,23 @@ eib/build/contracts/Input_bus.json:
 
 #======================================================================================================#
 
-%-ti.ts: %.ts
-	npx ts-interface-builder $<
-
-node_modules: package.json
-	npm install
-
-# smoelius: Make @0xproject's tsconfig file happy.
-node_modules/tsconfig.json:
-	mkdir -p $$(dirname $@)
-	echo {} > $@
-
 clobber: clean
 	rm -rf node_modules
 	rm -f package-lock.json
 
 clean: tidy
-	rm -f common/*-ti.ts
-	rm -f common/*.js
+	rm -f common/src/*-ti.ts
+	rm -f eibs_ts/src/*-ti.ts
+	rm -f examples/*/src/*-ti.ts
+	rm -f common/src/*.js
+	rm -f common/test/*.js
 	rm -f eib/public/*.js
 	rm -f eib/test/*.js
-	rm -f eibs_ts/src/*-ti.ts
 	rm -f eibs_ts/src/*.js
-	rm -f eibs_ts/test/*.js
-	rm -f examples/*/src/*-ti.ts
 	rm -f examples/*/src/*.js
 	rm -f examples/*/test/*.js
-	rm -f test/*.js
 	rm -f util/*.js
+	$(MAKE) -C common $@
 	$(MAKE) -C eib $@
 	$(MAKE) -C eibs_ts $@
 	$(MAKE) -C examples $@

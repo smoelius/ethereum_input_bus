@@ -2,7 +2,8 @@
  * uint256_from_ipfs_multihash.ts
  *====================================================================================================*/
 
-import { program_invocation_short_name, uint256_from_ipfs_multihash } from "../common"
+import { uint256_from_ipfs_multihash } from "../common/src/conversion"
+import { program_invocation_short_name } from "../common/src/err"
 
 /*====================================================================================================*/
 

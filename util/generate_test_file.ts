@@ -2,7 +2,8 @@
  * generate_test_file.ts
  *====================================================================================================*/
 
-import { generate_test_file, program_invocation_short_name } from "../common"
+import { program_invocation_short_name } from "../common/src/err"
+import { generate_test_file } from "../common/src/test_file"
 
 /*====================================================================================================*/
 

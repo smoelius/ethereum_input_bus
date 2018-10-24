@@ -36,11 +36,13 @@ export interface Test_context {
 
 /*====================================================================================================*/
 
-export function test(options: any, callback: (context: Test_context) => void): void {
+export function test(callback: (context: Test_context) => void): void {
 
   const context: any = {}
 
-  context.options = options
+  context.options = {
+    external_supplier: process.env["EIB_EXTERNAL_SUPPLIER"] ? true : false
+  }
 
   /*==================================================================================================*/
 

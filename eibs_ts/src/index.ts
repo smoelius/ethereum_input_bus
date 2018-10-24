@@ -11,10 +11,16 @@ import fs from "fs"
 import IPFS from "ipfs"
 import minimist from "minimist"
 import Web3 from "web3"
-import * as common from "../../common"
+import * as conversion from "../../common/src/conversion"
+import * as err from "../../common/src/err"
+import * as eth from "../../common/src/eth"
+import { get_file_info } from "../../common/src/file_info"
+import { guard as eib_guard } from "../../common/src/guard"
+import * as interfaces from "../../common/src/interfaces"
+import * as merkle from "../../common/src/merkle"
 import * as EIB from "../../eib/public/eib"
-import { guard } from "./guard"
-import * as interfaces from "./interfaces"
+import { guard as config_guard } from "./guard"
+import { Preconfiguration } from "./interfaces"
 
 // From: http://mikemcl.github.io/bignumber.js/
 // Almost never return exponential notation:
@@ -29,17 +35,17 @@ const DEFAULT_CALIBRATION = [24080.023891, 24089.387372, 114298.527304]
 const DEFAULT_GAS_CAP_ADJUSTMENT = 64 / 63
 const DEFAULT_PROFIT = 2 // percent
 
-const SUPPLY_SELECTOR = common.selector("supply(uint256,uint256,uint256[],uint256[])")
-const UNSUPPLY_SELECTOR = common.selector("unsupply(uint256)")
+const SUPPLY_SELECTOR = eth.selector("supply(uint256,uint256,uint256[],uint256[])")
+const UNSUPPLY_SELECTOR = eth.selector("unsupply(uint256)")
 
 const UNSUPPLY_SELECTION_GAS_COST = 427
-const UNSUPPLY_INTRO_GAS_COST = 63 + common.C_JUMP
-const UNSUPPLY_MAIN_GAS_COST = 40913 + common.C_JUMPDEST
-  + 2 * common.G_SHA3WORD
-  - common.G_SSET + common.G_SRESET - common.R_SCLEAR
-  - common.G_SSET + common.G_SRESET
+const UNSUPPLY_INTRO_GAS_COST = 63 + eth.C_JUMP
+const UNSUPPLY_MAIN_GAS_COST = 40913 + eth.C_JUMPDEST
+  + 2 * eth.G_SHA3WORD
+  - eth.G_SSET + eth.G_SRESET - eth.R_SCLEAR
+  - eth.G_SSET + eth.G_SRESET
 // smoelius: I am not sure that the next value is correct---it is my best guess.
-const UNSUPPLY_MEMORY_GAS_COST = 3 * common.G_MEMORY
+const UNSUPPLY_MEMORY_GAS_COST = 3 * eth.G_MEMORY
 
 const UNSUPPLY_GAS_COST =
     UNSUPPLY_SELECTION_GAS_COST
@@ -133,16 +139,16 @@ preconfig.debug_flag = preconfig.debug_flag || false
 preconfig.model_flag = preconfig.model_flag || false
 preconfig.mem_cache_flag = preconfig.mem_cache_flag || false
 
-const config = guard.Configuration(preconfig)
+const config = config_guard.Configuration(preconfig)
 
-const mem_cache: { [key: string]: common.File_info; } = {}
+const mem_cache: { [key: string]: interfaces.File_info; } = {}
 
 let filter: Web3.FilterResult
 
 /*====================================================================================================*/
 
 node.on("ready", () => {
-  filter = common.handle_block_events(
+  filter = eth.handle_block_events(
     web3,
     { fromBlock: "latest" },
     [{
@@ -150,18 +156,18 @@ node.on("ready", () => {
       event_callbacks: [{
         event: "Request_announced",
         callback: event => {
-          const request = common.guard.Request_announced(event)
+          const request = eib_guard.Request_announced(event)
           log_event(chalk.bold.red, "Request_announced", request)
-          const ipfs_hash = common.ipfs_multihash_from_uint256(request.file_addr[0])
+          const ipfs_hash = conversion.ipfs_multihash_from_uint256(request.file_addr[0])
           log("supplying request %d...", request.req_id)
           let data_length: number
           let proof_length: number
           let supply_gas_estimate: number
           if (config.model_flag) {
-            data_length = common.calculate_data_length(
+            data_length = merkle.calculate_data_length(
               request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber(), request.start.toNumber(),
               request.end.toNumber())
-            proof_length = common.calculate_proof_length(request.start.toNumber(),
+            proof_length = merkle.calculate_proof_length(request.start.toNumber(),
               request.end.toNumber(), request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber())
             supply_gas_estimate = model_estimate_supply_gas(data_length, proof_length)
             log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
@@ -169,8 +175,8 @@ node.on("ready", () => {
           node.files.cat(ipfs_hash, mem_cache_file_handler(ipfs_hash, (file, file_info) => {
             // smoelius: TODO: Verify that request still requires a response (i.e., has not been
             // canceled or already responded to).
-            const data = common.extract_data(file, request.start.toNumber(), request.end.toNumber())
-            const proof = common.extract_proof(request.start.toNumber(), request.end.toNumber(),
+            const data = merkle.extract_data(file, request.start.toNumber(), request.end.toNumber())
+            const proof = merkle.extract_proof(request.start.toNumber(), request.end.toNumber(),
               file_info.file_length, file_info.merkle_tree)
             assert(data_length === undefined || data_length === data.length)
             assert(proof_length === undefined || proof_length === proof.length)
@@ -212,7 +218,7 @@ node.on("ready", () => {
       {
         event: "Request_canceled",
         callback: event => {
-          const cancellation = common.guard.Request_canceled(event)
+          const cancellation = eib_guard.Request_canceled(event)
           log_event(chalk.bold.yellow, "Request_canceled", cancellation)
           return false
         }
@@ -221,7 +227,7 @@ node.on("ready", () => {
       {
         event: "Request_supplied",
         callback: event => {
-          const supplement = common.guard.Request_supplied(event)
+          const supplement = eib_guard.Request_supplied(event)
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
             supplement.callback_gas_before.minus(supplement.callback_gas_after).toNumber())
@@ -250,7 +256,7 @@ node.on("ready", () => {
       {
         event: "Request_paidout",
         callback: event => {
-          const payout = common.guard.Request_paidout(event)
+          const payout = eib_guard.Request_paidout(event)
           log_event(chalk.bold.magenta, "Request_paidout", payout)
           return false
         }
@@ -262,25 +268,25 @@ node.on("ready", () => {
 /*====================================================================================================*/
 
 function web3_estimate_supply_gas(data: BigNumber[], proof: BigNumber[],
-    request: common.Request_announced): number {
+    request: interfaces.Request_announced): number {
   const supply_id = new Buffer(4)
   supply_id.writeUInt32BE(SUPPLY_SELECTOR, 0)
   const supply_call = Buffer.concat([
       supply_id,
-      common.buffer_from_uint256(new BigNumber(EIB.FLAG_SUPPLY_SIMULATE)),
-      common.buffer_from_uint256(request.req_id),
-      common.buffer_from_uint256(new BigNumber(128)),
-      common.buffer_from_uint256(new BigNumber(128 + (1 + data.length) * 32))
-    ].concat([common.buffer_from_uint256(new BigNumber(data.length))])
-    .concat(data.map(common.buffer_from_uint256))
-    .concat([common.buffer_from_uint256(new BigNumber(proof.length))])
-    .concat(proof.map(common.buffer_from_uint256))
+      conversion.buffer_from_uint256(new BigNumber(EIB.FLAG_SUPPLY_SIMULATE)),
+      conversion.buffer_from_uint256(request.req_id),
+      conversion.buffer_from_uint256(new BigNumber(128)),
+      conversion.buffer_from_uint256(new BigNumber(128 + (1 + data.length) * 32))
+    ].concat([conversion.buffer_from_uint256(new BigNumber(data.length))])
+    .concat(data.map(conversion.buffer_from_uint256))
+    .concat([conversion.buffer_from_uint256(new BigNumber(proof.length))])
+    .concat(proof.map(conversion.buffer_from_uint256))
   )
   const supply_gas_estimate = web3.eth.estimateGas({
     to: eib.address,
     data: supply_call.toString("hex"),
     from: config.self_address
-  }) - common.G_TXDATANONZERO + common.G_TXDATAZERO - UNSUPPLY_GAS_COST
+  }) - eth.G_TXDATANONZERO + eth.G_TXDATAZERO - UNSUPPLY_GAS_COST
   return supply_gas_estimate
 }
 
@@ -291,13 +297,13 @@ function web3_estimate_unsupply_gas(req_id: BigNumber): number {
   unsupply_id.writeUInt32BE(UNSUPPLY_SELECTOR, 0)
   const unsupply_call = Buffer.concat([
       unsupply_id,
-      common.buffer_from_uint256(req_id)
+      conversion.buffer_from_uint256(req_id)
   ])
   const unsupply_gas_estimate = web3.eth.estimateGas({
     to: eib.address,
     data: unsupply_call.toString("hex"),
     from: config.self_address
-  }) - common.calculate_transaction_overhead(unsupply_call) - common.R_SCLEAR
+  }) - eth.calculate_transaction_overhead(unsupply_call) - eth.R_SCLEAR
   return unsupply_gas_estimate
 }
 
@@ -319,7 +325,7 @@ function price_gas(gas: number, value: BigNumber): BigNumber {
 /*====================================================================================================*/
 
 function mem_cache_file_handler(ipfs_hash: string,
-      file_info_callback: (file: Buffer, file_info: common.File_info) => void):
+      file_info_callback: (file: Buffer, file_info: interfaces.File_info) => void):
     (err: NodeJS.ErrnoException, file: any) => void {
   if (!(config.mem_cache_flag === true)) {
     return disk_cache_file_handler(ipfs_hash, file_info_callback)
@@ -349,7 +355,7 @@ function mem_cache_file_handler(ipfs_hash: string,
 /*====================================================================================================*/
 
 function disk_cache_file_handler(ipfs_hash: string,
-      file_info_callback: (file: Buffer, file_info: common.File_info) => void):
+      file_info_callback: (file: Buffer, file_info: interfaces.File_info) => void):
     (err: NodeJS.ErrnoException, file: any) => void {
   if (!config.disk_cache_path) {
     return generic_file_handler(ipfs_hash, file_info_callback)
@@ -365,7 +371,7 @@ function disk_cache_file_handler(ipfs_hash: string,
         log("'%s' read.", path)
         file_info_callback(file, {
           file_length: file_info.file_length,
-          merkle_tree: file_info.merkle_tree.map(common.to_bignumber)
+          merkle_tree: file_info.merkle_tree.map(conversion.to_bignumber)
         })
       } catch (read_err) {
         if (read_err.code === "ENOENT") {
@@ -392,14 +398,14 @@ function disk_cache_file_handler(ipfs_hash: string,
 /*====================================================================================================*/
 
 function generic_file_handler(ipfs_hash: string,
-      file_info_callback: (file: Buffer, file_info: common.File_info) => void):
+      file_info_callback: (file: Buffer, file_info: interfaces.File_info) => void):
     (err: NodeJS.ErrnoException, file: any) => void {
   return (err, file) => {
     if (err) {
       throw err
     }
     log("generating '%s' merkle tree...", ipfs_hash)
-    const file_info = common.get_file_info(file)
+    const file_info = get_file_info(file)
     log("'%s' merkle tree generated.", ipfs_hash)
     file_info_callback(file, file_info)
   }
@@ -433,7 +439,7 @@ function set_working_directory(): void {
 
 /*====================================================================================================*/
 
-function preconfigure(): interfaces.Preconfiguration {
+function preconfigure(): Preconfiguration {
   let file_config: any = {}
 
   log("reading local file '%s'...", EIBS_CONFIG)
@@ -459,7 +465,7 @@ function preconfigure(): interfaces.Preconfiguration {
 
   const external_config = Object.assign(file_config, delete_false_properties(arg_config))
 
-  const preconfig: interfaces.Preconfiguration = {}
+  const preconfig: Preconfiguration = {}
 
   for (const key in external_config) {
     switch (key) {
@@ -468,7 +474,7 @@ function preconfigure(): interfaces.Preconfiguration {
           case 0:
             break
           default:
-            common.fail("extraneous argument: %s", external_config[key][0])
+            err.fail("extraneous argument: %s", external_config[key][0])
             break
         }
         break
@@ -496,7 +502,7 @@ function preconfigure(): interfaces.Preconfiguration {
       case "calibrate":
         preconfig.calibration = external_config[key]
         if ((preconfig.calibration || []).length !== 3) {
-          common.fail("illegal argument to calibrate: %s", JSON.stringify(preconfig.calibration))
+          err.fail("illegal argument to calibrate: %s", JSON.stringify(preconfig.calibration))
         }
         break
       case "gas-cap-adjustment":
@@ -512,8 +518,8 @@ function preconfigure(): interfaces.Preconfiguration {
         preconfig.mem_cache_flag = external_config[key]
         break
       default:
-        common.warnx("unrecognized option: %s", key)
-        console.error("Try '%s --help' for more information.", common.program_invocation_short_name)
+        err.warnx("unrecognized option: %s", key)
+        console.error("Try '%s --help' for more information.", err.program_invocation_short_name)
         process.exit(1)
     }
   }
@@ -554,7 +560,7 @@ function usage(code: number): void {
     + "  --profit N               require N% profit when supplying data (default: %d)\n"
     + "  --disk-cache PATH        enable disk cache at PATH\n"
     + "  --mem-cache              enable memory cache",
-    common.program_invocation_short_name,
+    err.program_invocation_short_name,
     DEFAULT_BUILD_PATH,
     JSON.stringify(DEFAULT_CALIBRATION),
     DEFAULT_GAS_CAP_ADJUSTMENT,
