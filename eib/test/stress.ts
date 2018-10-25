@@ -45,7 +45,7 @@ test((context: Test_context) => {
   /*==================================================================================================*/
 
   describe("stress tests", function(): void {
-    this.timeout(4000) // 4 seconds
+    this.timeout(10000) // 10 seconds
 
     for (let start = 0; start <= file_info.file_length; start++) {
       if (start % 32 === 2) {

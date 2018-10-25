@@ -27,7 +27,7 @@ SRC := $(filter-out %-ti.ts, \
          $(wildcard util/*.ts) \
        )
 
-.PHONY: all pre_tsc compile post_tsc lint \
+.PHONY: all full pre_tsc compile post_tsc lint \
   check \
     check_unsupply_gas_costs \
       check_unsupply_selection_gas_cost \
@@ -43,6 +43,8 @@ SRC := $(filter-out %-ti.ts, \
 #======================================================================================================#
 
 all: pre_tsc compile post_tsc
+
+full: all check test
 
 pre_tsc: node_modules
 	$(MAKE) -C common $@

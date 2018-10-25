@@ -4,7 +4,7 @@
 
 NPX := npx --no-install
 
-.PHONY: all pre_tsc post_tsc check run test clean
+.PHONY: all pre_tsc post_tsc check test run clean
 
 #======================================================================================================#
 
@@ -17,7 +17,12 @@ post_tsc:
 check:
 
 test:
-	EIB_EXTERNAL_SUPPLIER=1 $(NPX) mocha
+	$(MAKE) -C ../eib deploy
+	( \
+	  $(MAKE) run > /dev/null & \
+	  trap "kill $$!" EXIT ; \
+	  EIB_EXTERNAL_SUPPLIER=1 $(NPX) mocha \
+	)
 
 run:
 	mkdir -p disk_cache

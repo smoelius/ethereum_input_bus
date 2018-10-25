@@ -11,16 +11,11 @@ JSON := eib_build/contracts/Input_bus.json \
         build/contracts/Spellcheck.json \
         build/contracts/Dict.json
 
-.PHONY: all deploy pre_tsc post_tsc compile check test clobber clean
+.PHONY: all pre_tsc post_tsc compile check test deploy clobber clean
 
 #======================================================================================================#
 
 all: pre_tsc post_tsc
-
-# smoelius: deploy requires that Dict.sol be generated.  (Since deploy will overwrite *.json, there is
-# likely a better way to organize this Makefile.)
-deploy: Dict.sol
-	$(NPX) truffle deploy
 
 # smoelius: Note that "compile" cannot be a pre_tsc dependency because the contents of the util
 # directory must be tsc-compiled before generate_dict_sol.sh can be run.
@@ -51,7 +46,18 @@ words-3.0-22.el7.noarch.rpm:
 check:
 
 test:
-	$(NPX) mocha
+	$(MAKE) -C ../../eib deploy
+	$(MAKE) deploy
+	( \
+	  $(MAKE) -C ../../eibs_ts run > /dev/null & \
+	  trap "kill $$!" EXIT ; \
+	  $(NPX) mocha \
+	)
+
+# smoelius: deploy requires that Dict.sol be generated.  (Since deploy will update *.json, there may be
+# a better way to organize this Makefile.)
+deploy: Dict.sol
+	(for X in $(JSON); do $(GREP) '"address":' "$$X" || exit 1; done) || $(NPX) truffle deploy
 
 clobber: clean
 	rm -f Dict.sol

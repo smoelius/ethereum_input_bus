@@ -5,7 +5,11 @@
 GREP := grep --color=auto
 NPX  := npx --no-install
 
-.PHONY: all deploy pre_tsc post_tsc compile \
+JSON := build/contracts/Input_bus.json \
+        build/contracts/Migrations.json \
+        build/contracts/Proxy_requestor.json
+
+.PHONY: all pre_tsc post_tsc compile \
   check \
     check_supply_overhead \
       check_supply_pre_callback_overhead \
@@ -24,22 +28,17 @@ NPX  := npx --no-install
       check_get_supplier_selection_gas_cost \
       check_get_data_selection_gas_cost \
       check_get_proof_selection_gas_cost \
-  test clean
+  test deploy clean
 
 #======================================================================================================#
 
 all: pre_tsc post_tsc
 
-deploy:
-	$(NPX) truffle deploy
-
 pre_tsc:
 
 post_tsc: compile
 
-compile: build/contracts/Input_bus.json \
-         build/contracts/Migrations.json \
-         build/contracts/Proxy_requestor.json
+compile: $(JSON)
 
 build/contracts/%.json: contracts/%.sol
 	$(NPX) truffle compile
@@ -178,7 +177,11 @@ Proxy_requestor_opcodes.txt: build/contracts/Proxy_requestor.json
 #======================================================================================================#
 
 test:
+	$(MAKE) deploy
 	$(NPX) mocha
+
+deploy:
+	(for X in $(JSON); do $(GREP) '"address":' "$$X" || exit 1; done) || $(NPX) truffle deploy
 
 clean:
 	rm -f Input_bus_opcodes.txt
