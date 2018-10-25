@@ -4,7 +4,7 @@
 
 NPX := npx --no-install
 
-.PHONY: all pre_tsc post_tsc check test run clean
+.PHONY: all pre_tsc post_tsc check test run clobber clean
 
 #======================================================================================================#
 
@@ -27,6 +27,8 @@ test:
 run:
 	mkdir -p disk_cache
 	node src/index.js --debug --mem-cache --disk-cache disk_cache
+
+clobber:
 
 clean:
 	rm -f disk_cache/*

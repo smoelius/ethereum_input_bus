@@ -4,7 +4,7 @@
 
 NPX := npx --no-install
 
-.PHONY: all pre_tsc post_tsc check test clean
+.PHONY: all pre_tsc post_tsc check test clobber clean
 
 #======================================================================================================#
 
@@ -18,6 +18,8 @@ check:
 
 test:
 	$(NPX) mocha
+
+clobber:
 
 clean:
 

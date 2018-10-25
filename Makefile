@@ -128,6 +128,10 @@ test:
 clobber: clean
 	rm -rf node_modules
 	rm -f package-lock.json
+	$(MAKE) -C common $@
+	$(MAKE) -C eib $@
+	$(MAKE) -C eibs_ts $@
+	$(MAKE) -C examples $@
 
 clean: tidy
 	rm -f common/src/*-ti.ts

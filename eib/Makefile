@@ -28,7 +28,7 @@ JSON := build/contracts/Input_bus.json \
       check_get_supplier_selection_gas_cost \
       check_get_data_selection_gas_cost \
       check_get_proof_selection_gas_cost \
-  test deploy clean
+  test deploy clobber clean
 
 #======================================================================================================#
 
@@ -182,6 +182,8 @@ test:
 
 deploy:
 	(for X in $(JSON); do $(GREP) '"address":' "$$X" || exit 1; done) || $(NPX) truffle deploy
+
+clobber:
 
 clean:
 	rm -f Input_bus_opcodes.txt

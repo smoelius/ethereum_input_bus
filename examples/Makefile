@@ -4,7 +4,7 @@
 
 SUBDIRS := $(filter-out Makefile README.md, $(wildcard *))
 
-.PHONY: all pre_tsc post_tsc check test clean
+.PHONY: all pre_tsc post_tsc check test clobber clean
 
 #======================================================================================================#
 
@@ -20,6 +20,9 @@ check:
 	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
 
 test:
+	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
+
+clobber:
 	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
 
 clean:
