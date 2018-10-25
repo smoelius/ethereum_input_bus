@@ -70,9 +70,9 @@ A requestor can cancel its request at any time before the data has been supplied
 
 One should be able to build EIB by simply typing `make`.
 
-Note that running the [examples](examples/README.md) also requires that
-[Ganache](https://truffleframework.com/ganache) and [MetaMask](https://metamask.io/) be installed.
-However, Ganache and MetaMask are not required to build the examples.
+Alternatively, one can launch [Ganache](https://truffleframework.com/ganache) and type `make full`.
+In addition to building EIB, `make full` runs all post-build checks and all tests.  Warning: On my
+laptop, `make full` currently takes about 11 minutes.
 
 
 ## Testing

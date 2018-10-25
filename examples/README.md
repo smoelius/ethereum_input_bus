@@ -19,10 +19,10 @@ directory, but skip step 5.
 
 2. Open a terminal window in which to perform steps 3-7 below.
 
-3. Send your MetaMask account some ether: cd to the `eib` directory, type `truffle console`, enter the
-   following command, and then type `ctrl-D` to exit:
+3. Send your MetaMask account some ether: cd to the `eib` directory, type `npx truffle console`, enter
+   the following command, and then type `ctrl-D` to exit:
 
-  * `web3.eth.sendTransaction({to: "`*your_MetaMask_account*`", from: "`*first_account_in_Ganache*`", value: web3.toWei(10, "ether") })`
+  * `web3.eth.sendTransaction({to: "`*your_MetaMask_account*`", from: "`*any_Ganache_account*`", value: web3.toWei(10, "ether") })`
 
 4. cd to the `eib` directory and type `make clean deploy`.
 
