@@ -24,6 +24,7 @@ const REQUEST_ETHER = new BN("10e15") // 10 milliether
 
 const REQUEST_GAS = 300000
 const SUPPLY_GAS  = 600000
+const PAYOUT_GAS  = 200000
 
 /*====================================================================================================*/
 
@@ -278,7 +279,7 @@ test((context: interfaces.Test_context) => {
                 EIB.PAYEE_DEFAULT
               ).encodeABI(),
               to: context.eib._address,
-              gas: REQUEST_GAS
+              gas: PAYOUT_GAS
             }),
             { fromBlock: block_number },
             [{
