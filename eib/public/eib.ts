@@ -6,7 +6,7 @@ import * as math from "../../common/src/math"
 
 /*====================================================================================================*/
 
-export const IPFS_WITH_KECCAK256_MERKLE_ROOT = 0
+export const IPFS_WITH_KECCAK256_MERKLE_ROOT = 1
 
 export const N_WORDS_IPFSKEC256 = 3
 

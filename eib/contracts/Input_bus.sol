@@ -13,6 +13,8 @@ contract Input_bus {
    *==================================================================================================*/
   
   enum file_address_type {
+    // smoelius: File address types start at 1.
+    _,
     IPFS_WITH_KECCAK256_MERKLE_ROOT
   }
   
