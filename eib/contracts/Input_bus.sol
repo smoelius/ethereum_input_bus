@@ -323,10 +323,10 @@ contract Input_bus {
      * is going to experience the refund one way or another.  Let them experience it when the request
      * is deleted during the payout. */
     
-    // smoelius: Use assembly to ensure that the path between the GAS and RETURN instructions is
-    // straight-line code.
+    // smoelius: Use of assembly helps to ensure that the path between the GAS and RETURN instructions
+    // is straight-line code.
     
-    // smoelius: Use a right-shift in computing the gas cap.  If you use a divide, then Solidity will
+    // smoelius: A right-shift is used to compute the gas cap.  If you use a divide, then Solidity will
     // insert a branch.
     
     uint256 gas_cap = callback_gas_before - (callback_gas_before >> 6);
@@ -452,8 +452,8 @@ contract Input_bus {
   }
   
   function activate_callback(uint _req_id, Request storage _req) internal returns(uint, uint, bool) {
-    // smoelius: Use assembly to ensure that the gas cost of the instructions between the GAS and CALL
-    // instructions is predictable, e.g., there are no MSTORE instructions.
+    // smoelius: Use of assembly helps to ensure that the gas cost of the instructions between the GAS
+    // and CALL instructions is predictable, e.g., there are no MSTORE instructions.
     
     address requestor = _req.requestor;
     bytes4 callback_id = _req.callback_id;
@@ -477,7 +477,7 @@ contract Input_bus {
     return (callback_gas_before, callback_gas_after, callback_result);
   }
   
-  // smoelius: Make unsupply payable to eliminate a CALLVALUE check.
+  // smoelius: Making unsupply payable eliminates a CALLVALUE check.
   
   function unsupply(uint _req_id) public payable {
     Request storage req = reqs[_req_id];

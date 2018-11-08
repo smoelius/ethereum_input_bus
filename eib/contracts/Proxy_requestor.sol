@@ -112,7 +112,7 @@ contract Proxy_requestor {
     + CALLBACK_NONEMITTING_MEMORY_GAS_COST
   ;
   
-  // smoelius: Make callback_nonemitting payable to eliminate a CALLVALUE check.
+  // smoelius: Making callback_nonemitting payable eliminates a CALLVALUE check.
   
   function callback_nonemitting(uint /* _req_id */) public payable {
     bool fail = msg.sender != address(eib);
@@ -195,11 +195,11 @@ contract Proxy_requestor {
     ;
   }
   
-  // smoelius: Make callback_emitting payable to eliminate a CALLVALUE check.
+  // smoelius: Making callback_emitting payable eliminates a CALLVALUE check.
   
   function callback_emitting(uint _req_id) public payable {
-    // smoelius: Use assembly because the code that solc would otherwise emit for callback_emitting is
-    // surprisingly complicated.
+    // smoelius: Assembly is used because the code that solc would otherwise emit for callback_emitting
+    // is surprisingly complicated.
     
     uint256 block_gas_limit = BLOCK_GAS_LIMIT;
     address eib_address = address(eib);
