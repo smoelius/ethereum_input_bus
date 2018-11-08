@@ -5,99 +5,86 @@
  * * I do not necessarily want to deploy a new instance of Input_bus, as "truffle test" would do.
  * * Truffle only decodes log entries for the invoked contract, which limits its applicability to my
  *   situation anyway.
- * Having said that, Truffle's method for decoding log entries is faster than any that I have found.
- * Perhaps Truffle preprocesses the relevant abis(?).  Currently, I am using (a seemingly outdated)
- * version of) ether-pudding to decode log entries from transaction receipts.  See:
+ * Currently, I am using (a seemingly outdated version of) ether-pudding to decode log entries from
+ * transaction receipts.  See:
  *   How do I parse the transaction receipt log with web3.js?
  *   https://ethereum.stackexchange.com/a/2101
  *====================================================================================================*/
 
 import assert from "assert"
-import types = require("ethereum-types")
 import fs from "fs"
 import Web3 from "web3"
+import * as web3_types from "web3/types"
+import * as eib_types from "../../eib/types/web3-contracts"
 import * as eth from "./eth"
+import { guard } from "./guard"
+import * as interfaces from "./interfaces"
 
 /*====================================================================================================*/
 
-export type Tx_hash = string
+export function test(callback: (context: interfaces.Test_context) => void): void {
 
-export interface Test_context {
-  options: any
-  web3: Web3
-  eib: Web3.ContractInstance
-  proxy: Web3.ContractInstance
-  handle_events: (
-      thunk: () => Tx_hash,
-      filter_value: string | types.FilterObject,
-      abi_callbacks: Array<eth.Abi_event_callback<boolean>>
-    ) => void
-}
+  const precontext: interfaces.Pretest_context = {}
 
-/*====================================================================================================*/
-
-export function test(callback: (context: Test_context) => void): void {
-
-  const context: any = {}
-
-  context.options = {
+  precontext.options = {
     external_supplier: process.env["EIB_EXTERNAL_SUPPLIER"] ? true : false
   }
 
   /*==================================================================================================*/
 
-  context.web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
-
-  context.web3.eth.defaultAccount = context.web3.eth.accounts[0]
-
-  /*==================================================================================================*/
-
-  /* tslint:disable variable-name */
-  const Input_bus_artifacts = JSON.parse(fs.readFileSync("build/contracts/Input_bus.json").toString())
-  const Input_bus = context.web3.eth.contract(Input_bus_artifacts.abi)
-  /* tslint:enable variable-name */
-
-  assert(Object.keys(Input_bus_artifacts.networks).length === 1)
-  const network = Object.keys(Input_bus_artifacts.networks)[0]
-
-  context.eib = Input_bus.at(Input_bus_artifacts.networks[network].address)
+  // smoelius: For why the use of websockets, see Adam Kipnis's answer to:
+  //   web3.eth.subscribe not implemented for web3 version 1.0.0-beta.27
+  //   https://stackoverflow.com/a/48174309
+  precontext.web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"))
 
   /*==================================================================================================*/
 
-  /* tslint:disable variable-name */
-  const Proxy_requestor_artifacts
+  precontext.Input_bus_artifacts
+    = JSON.parse(fs.readFileSync("build/contracts/Input_bus.json").toString())
+
+  assert(Object.keys(precontext.Input_bus_artifacts.networks).length === 1)
+  const network = Object.keys(precontext.Input_bus_artifacts.networks)[0]
+
+  precontext.eib = new precontext.web3.eth.Contract(precontext.Input_bus_artifacts.abi,
+    precontext.Input_bus_artifacts.networks[network].address) as eib_types.Input_bus
+
+  /*==================================================================================================*/
+
+  precontext.Proxy_requestor_artifacts
     = JSON.parse(fs.readFileSync("build/contracts/Proxy_requestor.json").toString())
-  const Proxy_requestor = context.web3.eth.contract(Proxy_requestor_artifacts.abi)
-  /* tslint:enable variable-name */
 
-  assert(Object.keys(Proxy_requestor_artifacts.networks).length === 1)
-  assert(Object.keys(Proxy_requestor_artifacts.networks)[0] === network)
+  assert(Object.keys(precontext.Proxy_requestor_artifacts.networks).length === 1)
+  assert(Object.keys(precontext.Proxy_requestor_artifacts.networks)[0] === network)
 
-  context.proxy = Proxy_requestor.at(Proxy_requestor_artifacts.networks[network].address)
+  precontext.proxy = new precontext.web3.eth.Contract(precontext.Proxy_requestor_artifacts.abi,
+    precontext.Proxy_requestor_artifacts.networks[network].address) as eib_types.Proxy_requestor
+
+  /*==================================================================================================*/
+
+  precontext.handle_events = test_handle_events(precontext)
 
   /*==================================================================================================*/
 
-  context.handle_events = test_handle_events(context)
-
-  /*==================================================================================================*/
+  const context = guard.Test_context(precontext)
 
   callback(context)
 }
 
 /*====================================================================================================*/
 
-function test_handle_events(context: Test_context): (
-      thunk: () => Tx_hash,
-      filter_value: string | types.FilterObject,
-      abi_event_callbacks: Array<eth.Abi_event_callback<boolean>>
-    ) => void {
-  return (thunk, filter_value, abi_event_callbacks) => {
-    if (!(context.options.external_supplier === true)) {
-      const promised_receipt = eth.promisify<types.TransactionReceipt | null>(
-        callback => context.web3.eth.getTransactionReceipt(thunk(), callback))
-      eth.handle_receipt_events(promised_receipt, abi_event_callbacks)
+export type handle_events_type = (
+    thunk: () => Promise<web3_types.TransactionReceipt>,
+    options: web3_types.Logs,
+    abi_event_callbacks: Array<eth.Abi_event_callback<void>>
+  ) => Promise<void>
+
+function test_handle_events(precontext: interfaces.Pretest_context): handle_events_type {
+  return (thunk, options, abi_event_callbacks) => {
+    if (!(precontext.options.external_supplier === true)) {
+      return thunk().then(eth.handle_receipt_events(abi_event_callbacks))
     } else {
-      eth.handle_block_events(context.web3, filter_value, abi_event_callbacks)
+      return eth.promise_of(eth.handle_block_events(precontext.web3 as Web3, options,
+        abi_event_callbacks))
     }
   }
 }

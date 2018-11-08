@@ -2,7 +2,9 @@
  * state.ts
  *====================================================================================================*/
 
-import { Test_context } from "../../common/src/test"
+import * as interfaces from "../../common/src/interfaces"
+
+declare const it: (title: string, fn: () => Promise<void>) => void
 
 /*====================================================================================================*/
 
@@ -25,7 +27,7 @@ import { Test_context } from "../../common/src/test"
 
 /*====================================================================================================*/
 
-export function state(context: Test_context): void {
+export function state(context: interfaces.Test_context): void {
 
   /*==================================================================================================*/
 

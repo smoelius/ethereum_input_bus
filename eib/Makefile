@@ -9,7 +9,7 @@ JSON := build/contracts/Input_bus.json \
         build/contracts/Migrations.json \
         build/contracts/Proxy_requestor.json
 
-.PHONY: all pre_tsc post_tsc compile \
+.PHONY: all pre_tsc post_tsc compile types \
   check \
     check_supply_overhead \
       check_supply_pre_callback_overhead \
@@ -34,11 +34,20 @@ JSON := build/contracts/Input_bus.json \
 
 all: pre_tsc post_tsc
 
-pre_tsc:
+pre_tsc: types/web3-contracts/index.d.ts
 
-post_tsc: compile
+post_tsc:
 
 compile: $(JSON)
+
+types: types/web3-contracts/index.d.ts
+
+types/web3-contracts/index.d.ts: $(JSON)
+	$(NPX) typechain --target web3-1.0.0 'build/contracts/*.json'
+	( \
+    echo 'export * from "./Input_bus"' ; \
+    echo 'export * from "./Proxy_requestor"' \
+  ) > $@
 
 build/contracts/%.json: contracts/%.sol
 	$(NPX) truffle compile
@@ -188,7 +197,8 @@ clobber:
 clean:
 	rm -f Input_bus_opcodes.txt
 	rm -f Proxy_requestor_opcodes.txt
-	rm -f build/contracts/*.json
+	rm -rf build
+	rm -rf types
 
 #======================================================================================================#
 

@@ -2,23 +2,21 @@
  * index.ts for Spellcheck
  *====================================================================================================*/
 
-import { BigNumber } from "bignumber.js"
-import types = require("ethereum-types")
+import BN from "bn.js"
 import Web3 from "web3"
+import * as web3_types from "web3/types"
 import * as conversion from "../../../common/src/conversion"
 import * as eth from "../../../common/src/eth"
 import { guard as eib_guard } from "../../../common/src/guard"
 import * as math from "../../../common/src/math"
+import { none } from "../../../common/src/promise"
 import * as web from "../../../common/src/web"
 import Dict_artifacts from "../build/contracts/Dict.json"
 import Spellcheck_artifacts from "../build/contracts/Spellcheck.json"
 import Input_bus_artifacts from "../eib_build/contracts/Input_bus.json"
+import * as sc_types from "../types/web3-contracts"
 import { guard as sc_guard } from "./guard"
 import * as sc_interfaces from "./interfaces"
-
-// From: http://mikemcl.github.io/bignumber.js/
-// Almost never return exponential notation:
-BigNumber.config({ EXPONENTIAL_AT: 1e+9 })
 
 /*====================================================================================================*/
 
@@ -26,7 +24,7 @@ declare global {
   interface Window {
     web3: Web3
     sc_address: string
-    sc: any
+    sc: sc_types.Spellcheck
     spellcheck: () => void
     cancel: () => void
   }
@@ -40,7 +38,7 @@ const REFUND_GAS     = 300000
 /*====================================================================================================*/
 
 let gas_used: number
-let filter: Web3.FilterResult
+let subscription: web3_types.Subscribe<web3_types.Log>
 
 /*====================================================================================================*/
 
@@ -56,10 +54,6 @@ window.addEventListener("load", () => {
     }
     window.web3 = new Web3(window.web3.currentProvider)
 
-    /* tslint:disable variable-name */
-    const Spellcheck = window.web3.eth.contract(Spellcheck_artifacts.abi)
-    /* tslint:enable variable-name */
-
     if (Object.keys(Spellcheck_artifacts.networks).length !== 1) {
       return stop_with_error(true,
         "Unexpected number of networks (did you remember to deploy Spellcheck?).")
@@ -67,20 +61,17 @@ window.addEventListener("load", () => {
     const network = Object.keys(Spellcheck_artifacts.networks)[0]
     window.sc_address = Spellcheck_artifacts.networks[network].address
 
-    window.sc = Spellcheck.at(window.sc_address)
+    window.sc = new window.web3.eth.Contract(Spellcheck_artifacts.abi,
+      window.sc_address) as sc_types.Spellcheck
 
-    /* tslint:disable variable-name */
-    const Dict = window.web3.eth.contract(Dict_artifacts.abi)
-    /* tslint:enable variable-name */
+    const dict_address = await window.sc.methods.dict().call()
 
-    const dict_address = await eth.promisify<string>(window.sc.dict)
+    const dict = new window.web3.eth.Contract(Dict_artifacts.abi, dict_address) as sc_types.Dict
 
-    const dict = Dict.at(dict_address)
+    const file_addr = await dict.methods.file_addr().call()
 
-    const file_addr = await eth.promisify<BigNumber[]>(dict.file_addr)
-
-    const ipfs_multihash = conversion.ipfs_multihash_from_uint256(file_addr[0])
-    const gas = math.ceil_div_big(file_addr[1], new BigNumber(32)).times(eth.G_SSET)
+    const ipfs_multihash = conversion.ipfs_multihash_from_uint256(new BN(file_addr[0]))
+    const gas = math.ceil_div_big(new BN(file_addr[1]), new BN(32)).muln(eth.G_SSET)
 
     web.set_text("ipfs_multihash", ipfs_multihash)
     web.set_text("file_length", file_addr[1].toString())
@@ -93,7 +84,7 @@ window.addEventListener("load", () => {
       }
       const safe_low = JSON.parse(request.responseText).safeLow
       web.set_text("gas_rate", (safe_low / 10).toString())
-      web.set_text("file_ether", gas.times(safe_low).dividedBy("10e9").toString())
+      web.set_text("file_ether", gas.muln(safe_low).div(new BN("10e9")).toString())
     }
     request.open("GET", "https://ethgasstation.info/json/ethgasAPI.json", true)
     request.send()
@@ -121,7 +112,7 @@ window.addEventListener("keyup", event => {
 
 function spellcheck(): void {
   (async () => {
-    const accounts = await eth.promisify(window.web3.eth.getAccounts)
+    const accounts = await window.web3.eth.getAccounts()
     if (accounts.length <= 0) {
       return stop_with_error(false, "Please unlock MetaMask.")
     }
@@ -130,7 +121,7 @@ function spellcheck(): void {
     if (word === "") {
       return stop_with_error(false, "Please specify a word.")
     }
-    const value = window.web3.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
+    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
 
     web.show("checking_message", false)
     web.show("valid_message", false)
@@ -154,43 +145,37 @@ function spellcheck(): void {
     web.show("spellcheck_container", false)
     web.show("cancel_container", true)
 
-    const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>(callback => window.sc.spellcheck(
-      word,
-      {
-        from: accounts[0],
-        value: value,
-        gas: SPELLCHECK_GAS,
-        gasPrice: gas_price
-      },
-      callback
-    ))
-    eth.handle_receipt_events(
-      eth.promisify<types.TransactionReceipt | null>(
-        callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+    const gas_price = await window.web3.eth.getGasPrice()
+    window.web3.eth.sendTransaction({
+      data: window.sc.methods.spellcheck(
+        word
+      ).encodeABI(),
+      from: accounts[0],
+      to: window.sc._address,
+      value: value,
+      gas: SPELLCHECK_GAS,
+      gasPrice: gas_price
+    }).then(eth.handle_receipt_events(
       [{
-        abi: window.sc.abi,
+        abi: Spellcheck_artifacts.abi,
         event_callbacks: [{
           event: "Spellcheck_init",
           callback: (event, receipt) => {
             const sc_init = sc_guard.Spellcheck_init(event)
-            if (!(sc_init.requestor === accounts[0]
+            if (!(window.web3.utils.toBN(sc_init.requestor).eq(window.web3.utils.toBN(accounts[0]))
                 && sc_init.word === word
-                && sc_init.value.equals(value))) {
-              return false
+                && conversion.bn_from_bignumber(sc_init.value).eq(new BN(value)))) {
+              return none<void>()
             }
             gas_used = 0
-            spellcheck_handle_receipt_events(sc_init, Promise.resolve(receipt))
-            return true
+            return Promise.resolve(receipt)
+              .then(spellcheck_handle_receipt_events(sc_init))
           }
         }]
-      }],
-      found => {
-        if (!found) {
-          return stop_with_error(true, "Could not spellcheck initiation event.")
-        }
-      }
-    )
+      }]
+    )).catch((err: any) => {
+      stop_with_error(true, "Could not find spellcheck initiation event.")
+    })
   })().catch(err => {
     throw err
   })
@@ -198,93 +183,95 @@ function spellcheck(): void {
 
 /*====================================================================================================*/
 
-function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init,
-    promised_receipt: Promise<types.TransactionReceipt | null>): void {
-  eth.handle_receipt_events(
-    promised_receipt,
-    [{
-      abi: window.sc.abi,
-      event_callbacks: [{
-        event: "Spellcheck_update",
-        callback: (event, receipt) => {
-          const sc_update = sc_guard.Spellcheck_update(event)
-          if (!sc_init.sc_id.equals(sc_update.sc_id)) {
-            return false
-          }
-          update_gas_used(receipt)
-          eth.handle_receipt_events(
-            promised_receipt,
-            [{
-              abi: Input_bus_artifacts.abi,
-              event_callbacks: [{
-                event: "Request_announced",
-                callback: (event, receipt) => {
-                  const request = eib_guard.Request_announced(event)
-                  if (!(window.sc_address === request.requestor
-                      && sc_update.req_id.equals(request.req_id))) {
-                    return false
-                  }
-                  filter = eth.handle_block_events(
-                    window.web3,
-                    { fromBlock: receipt.blockNumber },
-                    [{
-                      abi: Input_bus_artifacts.abi,
-                      event_callbacks: [{
-                        event: "Request_supplied",
-                        callback: (event, receipt) => {
-                          const supplement = eib_guard.Request_supplied(event)
-                          if (!request.req_id.equals(supplement.req_id)) {
-                            return false
-                          }
-                          spellcheck_handle_receipt_events(sc_init, Promise.resolve(receipt))
-                          return true
-                        }
-                      }]
-                    }]
-                  )
-                  return true
-                }
-              }]
-            }],
-            found => {
-              if (!found) {
-                return stop_with_error(true, "Could not find request announcement event.")
-              }
+function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init):
+    (receipt: web3_types.TransactionReceipt) => Promise<void> {
+  return receipt =>
+    Promise.resolve(receipt)
+    .then(eth.handle_receipt_events(
+      [{
+        abi: Spellcheck_artifacts.abi,
+        event_callbacks: [{
+          event: "Spellcheck_update",
+          callback: (event, receipt) => {
+            const sc_update = sc_guard.Spellcheck_update(event)
+            if (!conversion.bn_from_bignumber(sc_init.sc_id)
+                .eq(conversion.bn_from_bignumber(sc_update.sc_id))) {
+              return none<void>()
             }
-          )
-          return true
-        }
-      }, {
-        event: "Spellcheck_end",
-        callback: (event, receipt) => {
-          const sc_end = sc_guard.Spellcheck_end(event)
-          if (!sc_init.sc_id.equals(sc_end.sc_id)) {
-            return false
+            update_gas_used(receipt)
+            return Promise.resolve(receipt)
+              .then(eth.handle_receipt_events(
+                [{
+                  abi: Input_bus_artifacts.abi,
+                  event_callbacks: [{
+                    event: "Request_announced",
+                    callback: (event, receipt) => {
+                      const request = eib_guard.Request_announced(event)
+                      if (!(window.web3.utils.toBN(window.sc_address)
+                            .eq(window.web3.utils.toBN(request.requestor))
+                          && conversion.bn_from_bignumber(sc_update.req_id)
+                            .eq(conversion.bn_from_bignumber(request.req_id)))) {
+                        return none<void>()
+                      }
+                      const obj = eth.handle_block_events(
+                        window.web3,
+                        { fromBlock: receipt.blockNumber },
+                        [{
+                          abi: Input_bus_artifacts.abi,
+                          event_callbacks: [{
+                            event: "Request_supplied",
+                            callback: (event, receipt) => {
+                              const supplement = eib_guard.Request_supplied(event)
+                              if (!conversion.bn_from_bignumber(request.req_id)
+                                  .eq(conversion.bn_from_bignumber(supplement.req_id))) {
+                                return none<void>()
+                              }
+                              return Promise.resolve(receipt)
+                                .then(spellcheck_handle_receipt_events(sc_init))
+                            }
+                          }]
+                        }]
+                      )
+                      subscription = eth.subscription_of(obj)
+                      return eth.promise_of(obj)
+                    }
+                  }]
+                }]
+              )).catch(err => {
+                stop_with_error(true, "Could not find request announcement event.")
+              })
           }
-          update_gas_used(receipt)
-          web.show("checking_message", false)
-          web.show(sc_end.valid ? "valid_message" : "invalid_message", true)
-          const value_used = sc_init.value.minus(sc_end.unspent_value)
-          web.set_text("value_used", window.web3.fromWei(value_used, "finney").toString())
-          web.show("value_used_container", true)
-          if (!sc_end.unspent_value.isZero()) {
-            refund(sc_init)
+        }, {
+          event: "Spellcheck_end",
+          callback: (event, receipt) => {
+            const sc_end = sc_guard.Spellcheck_end(event)
+            if (!conversion.bn_from_bignumber(sc_init.sc_id)
+                .eq(conversion.bn_from_bignumber(sc_end.sc_id))) {
+              return none<void>()
+            }
+            update_gas_used(receipt)
+            web.show("checking_message", false)
+            web.show(sc_end.valid ? "valid_message" : "invalid_message", true)
+            const value_used = conversion.bn_from_bignumber(sc_init.value)
+              .sub(conversion.bn_from_bignumber(sc_end.unspent_value))
+            web.set_text("value_used",
+              window.web3.utils.fromWei(value_used.toString(), "finney").toString())
+            web.show("value_used_container", true)
+            if (conversion.bn_from_bignumber(sc_end.unspent_value).gtn(0)) {
+              return refund(sc_init)
+            }
+            return Promise.resolve()
           }
-          return true
-        }
+        }]
       }]
-    }],
-    found => {
-      if (!found) {
-        return stop_with_error(true, "Could not find spellcheck update/end event.")
-      }
-    }
-  )
+    )).catch(err => {
+      stop_with_error(true, "Could not find spellcheck update/end event.")
+    })
 }
 
 /*====================================================================================================*/
 
-function update_gas_used(receipt: types.TransactionReceipt): void {
+function update_gas_used(receipt: web3_types.TransactionReceipt): void {
   gas_used += receipt.gasUsed
   web.set_text("gas_used", gas_used.toString())
   web.show("gas_used_container", true)
@@ -292,45 +279,40 @@ function update_gas_used(receipt: types.TransactionReceipt): void {
 
 /*====================================================================================================*/
 
-function refund(sc_init: sc_interfaces.Spellcheck_init): void {
-  (async () => {
-    const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>(callback => window.sc.refund(
-      sc_init.sc_id,
-      {
-        from: sc_init.requestor,
-        gas: REFUND_GAS,
-        gasPrice: gas_price
-      },
-      callback
-    ))
-    eth.handle_receipt_events(
-      eth.promisify(callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+function refund(sc_init: sc_interfaces.Spellcheck_init): Promise<void> {
+  return (async () => {
+    const gas_price = await window.web3.eth.getGasPrice()
+    return window.web3.eth.sendTransaction({
+      data: window.sc.methods.refund(
+        sc_init.sc_id.toString()
+      ).encodeABI(),
+      from: sc_init.requestor,
+      to: window.sc._address,
+      gas: REFUND_GAS,
+      gasPrice: gas_price
+    }).then(eth.handle_receipt_events(
       [{
-        abi: window.sc.abi,
+        abi: Spellcheck_artifacts.abi,
         event_callbacks: [{
           event: "Spellcheck_refund",
           callback: event => {
             const sc_refund = sc_guard.Spellcheck_refund(event)
-            if (!sc_init.sc_id.equals(sc_refund.sc_id)) {
-              return false
+            if (!conversion.bn_from_bignumber(sc_init.sc_id)
+                .eq(conversion.bn_from_bignumber(sc_refund.sc_id))) {
+              return none<void>()
             }
-            web.set_text("value_refunded", window.web3.fromWei(sc_refund.value, "finney").toString())
+            web.set_text("value_refunded",
+              window.web3.utils.fromWei(sc_refund.value.toString(), "finney").toString())
             web.show("value_refunded_container", true)
             stop()
-            return true
+            return Promise.resolve()
           }
         }]
-      }],
-      found => {
-        if (!found) {
-          return stop_with_error(true, "Could not find spellcheck refund event.")
-        }
-      }
-    )
-  })().catch(err => {
-    throw err
-  })
+      }]
+    )).catch((err: any) => {
+      stop_with_error(true, "Could not find spellcheck refund event.")
+    })
+  })()
 }
 
 /*====================================================================================================*/
@@ -344,8 +326,9 @@ function stop_with_error(internal: boolean, message: string): void {
 
 function stop(): void {
   (async () => {
-    if (filter !== undefined) {
-      await filter.stopWatching()
+    if (subscription !== undefined) {
+      // smoelius: @types/web3/types.d.ts's Subscribe type is broken.
+      (subscription as any).unsubscribe()
     }
 
     web.show("checking_message", false)

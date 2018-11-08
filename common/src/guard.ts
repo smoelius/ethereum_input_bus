@@ -10,6 +10,10 @@ import ti from "./interfaces-ti"
 
 /* tslint:disable no-string-literal */
 ti["BigNumber"] = checker.iface([], {})
+ti["BN"] = checker.iface([], {})
+ti["Web3"] = checker.iface([], {})
+ti["eib_types.Input_bus"] = checker.iface([], {})
+ti["eib_types.Proxy_requestor"] = checker.iface([], {})
 /* tslint:enable no-string-literal */
 
 const checkers = checker.createCheckers(ti)
@@ -20,7 +24,8 @@ export const guard = {
   Request_canceled: check<interfaces.Request_canceled>(checkers.Request_canceled),
   Request_supplied: check<interfaces.Request_supplied>(checkers.Request_supplied),
   Request_paidout: check<interfaces.Request_paidout>(checkers.Request_paidout),
-  Proxy_callback: check<interfaces.Proxy_callback>(checkers.Proxy_callback)
+  Proxy_callback: check<interfaces.Proxy_callback>(checkers.Proxy_callback),
+  Test_context: check<interfaces.Test_context>(checkers.Test_context)
 }
 
 export function check<T>(checker: checker.Checker): (obj: any) => T {

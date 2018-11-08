@@ -6,11 +6,15 @@
 # * Changes to common/src/*.ts are recognized as necessitating the recompilation of eib/test/*.ts,
 #   eibs_ts/src/*.ts, etc.
 # * Node modules are shared amongst the subprojects, i.e., there is only one node_modules folder.
+# See also comments regarding pre_tsc and post_tsc in examples/spellcheck/Makefile.
 #======================================================================================================#
 
 GREP := grep --color=auto
 NPX  := npx --no-install
 TSC  := tsc # --traceResolution
+
+TYPES := eib/types/web3-contracts/index.d.ts \
+         $(addsuffix /index.d.ts, $(wildcard examples/*/types/web3-contracts))
 
 TI := common/src/interfaces-ti.ts \
       eibs_ts/src/interfaces-ti.ts \
@@ -54,10 +58,10 @@ pre_tsc: node_modules
 
 compile: common/src/index.js
 
-common/src/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
+common/src/index.js: $(TYPES) $(TI) $(SRC) node_modules node_modules/web3-legacy
 	$(NPX) $(TSC)
-	@# smoelius: Use the modification time of common/src/index.js to indicate the last time that tsc was
-	@# invoked.
+	@# smoelius: The modification time of common/src/index.js is used to indicate the last time that tsc
+	@# was invoked.
 	touch $@
 
 %-ti.ts: %.ts
@@ -65,11 +69,13 @@ common/src/index.js: $(TI) $(SRC) node_modules node_modules/tsconfig.json
 
 node_modules: package.json
 	npm install
+	sed -i 's,\(require("web3\)\(/lib/web3/event.js")\),\1-legacy\2,' node_modules/ether-pudding/index.js
 
-# smoelius: Make @0xproject's tsconfig file happy.
-node_modules/tsconfig.json:
-	mkdir -p $$(dirname $@)
-	echo {} > $@
+# smoelius: Installing web3-0.20.6 is a stopgap measure until I can find an alternative to using
+# ether-pudding's logParser.
+node_modules/web3-legacy:
+	git clone https://github.com/ethereum/web3.js.git $@
+	cd $@ && git checkout tags/v0.20.6 && npm install
 
 post_tsc: node_modules
 	$(MAKE) -C common $@

@@ -2,14 +2,16 @@
  * index.ts for EIB Proxy Web UI
  *====================================================================================================*/
 
-import { BigNumber } from "bignumber.js"
-import types = require("ethereum-types")
+import BN from "bn.js"
 import Web3 from "web3"
+import * as web3_types from "web3/types"
 import * as conversion from "../../../common/src/conversion"
 import * as eth from "../../../common/src/eth"
 import { guard } from "../../../common/src/guard"
+import { none } from "../../../common/src/promise"
 import * as web from "../../../common/src/web"
 import * as EIB from "../../../eib/public/eib"
+import * as eib_types from "../../../eib/types/web3-contracts"
 import Input_bus_artifacts from "../build/contracts/Input_bus.json"
 import Proxy_requestor_artifacts from "../build/contracts/Proxy_requestor.json"
 
@@ -29,7 +31,7 @@ const REQUEST_GAS = 300000
 
 /*====================================================================================================*/
 
-let filter: Web3.FilterResult
+let subscription: web3_types.Subscribe<web3_types.Log>
 let hex: string
 let ascii: string[]
 
@@ -87,7 +89,7 @@ window.addEventListener("resize", redisplay)
 
 function request(): void {
   (async () => {
-    const accounts = await eth.promisify(window.web3.eth.getAccounts)
+    const accounts = await window.web3.eth.getAccounts()
     if (accounts.length <= 0) {
       return stop_with_error(false, "Please unlock MetaMask.")
     }
@@ -102,7 +104,7 @@ function request(): void {
     const merkle_root = web.as_get<HTMLInputElement>("merkle_root").value
     const start = web.as_get<HTMLInputElement>("start").value
     const end = web.as_get<HTMLInputElement>("end").value
-    const value = window.web3.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
+    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
 
     hex = ""
     ascii = []
@@ -111,55 +113,51 @@ function request(): void {
     web.show("request_container", false)
     web.show("cancel_container", true)
 
-    /* tslint:disable variable-name */
-    const Proxy_requestor = window.web3.eth.contract(Proxy_requestor_artifacts.abi)
-    /* tslint:enable variable-name */
-
-    const proxy = Proxy_requestor.at(proxy_address)
+    const proxy = new window.web3.eth.Contract(Proxy_requestor_artifacts.abi,
+      proxy_address) as eib_types.Proxy_requestor
 
     const file_addr = [
-      new BigNumber(ipfs_hash),
-      new BigNumber(file_length),
-      new BigNumber(merkle_root)
+      ipfs_hash,
+      new BN(file_length),
+      window.web3.utils.toBN(merkle_root)
     ]
 
-    const gas_price = await eth.promisify(window.web3.eth.getGasPrice)
-    const tx_hash = await eth.promisify<string>(callback => proxy.request(
-      EIB.FLAGS_NONE,
-      EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
-      file_addr,
-      start,
-      end,
-      EIB.LTIOV_NONE,
-      false,
-      EIB.PROXY_CALLBACK_GAS_DEFAULT,
-      {
-        from: accounts[0],
-        value: value,
-        gas: REQUEST_GAS,
-        gasPrice: gas_price
-      },
-      callback
-    ))
-    eth.handle_receipt_events(
-      eth.promisify<types.TransactionReceipt | null>(
-        callback => window.web3.eth.getTransactionReceipt(tx_hash, callback)),
+    const gas_price = await window.web3.eth.getGasPrice()
+    window.web3.eth.sendTransaction({
+      data: proxy.methods.request(
+        EIB.FLAGS_NONE,
+        EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
+        file_addr.map(conversion.to_hex),
+        start,
+        end,
+        EIB.LTIOV_NONE,
+        false,
+        EIB.PROXY_CALLBACK_GAS_DEFAULT
+      ).encodeABI(),
+      from: accounts[0],
+      to: proxy._address,
+      value: value,
+      gas: REQUEST_GAS,
+      gasPrice: gas_price
+    }).then(eth.handle_receipt_events(
       [{
         abi: Input_bus_artifacts.abi,
         event_callbacks: [{
           event: "Request_announced",
           callback: (event, receipt) => {
             const request = guard.Request_announced(event)
-            if (!(request.requestor === proxy_address
-                && request.file_addr_type.equals(EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT)
-                && conversion.json_equals(request.file_addr, file_addr)
-                && request.start.equals(start)
-                && request.end.equals(end)
-                && request.ltiov.equals(EIB.LTIOV_NONE)
-                && request.value.equals(value))) {
-              return false
+            if (!(window.web3.utils.toBN(request.requestor).eq(window.web3.utils.toBN(proxy_address))
+                && conversion.bn_from_bignumber(request.file_addr_type)
+                  .eqn(EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT)
+                && conversion.json_equals(request.file_addr.map(conversion.bn_from_bignumber),
+                  file_addr)
+                && conversion.bn_from_bignumber(request.start).eq(new BN(start))
+                && conversion.bn_from_bignumber(request.end).eq(new BN(end))
+                && conversion.bn_from_bignumber(request.ltiov).eqn(EIB.LTIOV_NONE)
+                && conversion.bn_from_bignumber(request.value).eq(new BN(value)))) {
+              return none<void>()
             }
-            filter = eth.handle_block_events(
+            const obj = eth.handle_block_events(
               window.web3,
               { fromBlock: receipt.blockNumber },
               [{
@@ -168,10 +166,11 @@ function request(): void {
                   event: "Request_supplied",
                   callback: (event, receipt) => {
                     const supplement = guard.Request_supplied(event)
-                    if (!request.req_id.equals(supplement.req_id)) {
-                      return false
+                    if (!conversion.bn_from_bignumber(request.req_id)
+                        .eq(conversion.bn_from_bignumber(supplement.req_id))) {
+                      return none<void>()
                     }
-                    const data = Buffer.concat(supplement.data.map(conversion.to_bignumber)
+                    const data = Buffer.concat(supplement.data.map(window.web3.utils.toBN)
                       .map(conversion.buffer_from_uint256).slice(0, Number(end) - Number(start)))
                     hex = data.toString("hex").split("").map((x, i) => i % 2 === 0 ? x : x + " ")
                       .join("")
@@ -179,21 +178,19 @@ function request(): void {
                       .toString("ascii").split("").map(web.escape_char)
                     redisplay()
                     stop()
-                    return true
+                    return Promise.resolve()
                   }
                 }]
               }]
             )
-            return true
+            subscription = eth.subscription_of(obj)
+            return eth.promise_of(obj)
           }
         }]
-      }],
-      found => {
-        if (!found) {
-          return stop_with_error(true, "Could not find request announcement event.")
-        }
-      }
-    )
+      }]
+    )).catch(err => {
+      stop_with_error(true, "Could not find request announcement event.")
+    })
   })().catch(err => {
     throw err
   })
@@ -241,8 +238,9 @@ function stop_with_error(internal: boolean, message: string): void {
 
 function stop(): void {
   (async () => {
-    if (filter !== undefined) {
-      await filter.stopWatching()
+    if (subscription !== undefined) {
+      // smoelius: @types/web3/types.d.ts's Subscribe type is broken.
+      (subscription as any).unsubscribe()
     }
 
     web.show("cancel_container", false)

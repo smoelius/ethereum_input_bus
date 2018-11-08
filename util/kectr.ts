@@ -3,15 +3,11 @@
  *====================================================================================================*/
 
 import assert from "assert"
-import { BigNumber } from "bignumber.js"
+import BN from "bn.js"
 import fs from "fs"
 import minimist from "minimist"
 import * as err from "../common/src/err"
 import { get_file_info } from "../common/src/file_info"
-
-// From: http://mikemcl.github.io/bignumber.js/
-// Almost never return exponential notation:
-BigNumber.config({ EXPONENTIAL_AT: 1e+9 })
 
 /*====================================================================================================*/
 
@@ -75,7 +71,7 @@ stream.on("data", chunk => {
       console.log(JSON.stringify(file_info, null, "  "))
       break
     case Mode.root:
-      let merkle_root = new BigNumber(0)
+      let merkle_root = new BN(0)
       if (file_info.file_length >= 1) {
         merkle_root = file_info.merkle_tree[file_info.merkle_tree.length - 1]
       }

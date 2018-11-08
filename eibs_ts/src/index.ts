@@ -3,14 +3,13 @@
  *====================================================================================================*/
 
 import assert from "assert"
-// smoelius: BigNumber version 4.1.0 comes with a .d.ts file and seems to have an interface that is
-// compatible with web3.
-import { BigNumber } from "bignumber.js"
+import BN from "bn.js"
 import chalk from "chalk"
 import fs from "fs"
 import IPFS from "ipfs"
 import minimist from "minimist"
 import Web3 from "web3"
+import web3_types from "web3/types"
 import * as conversion from "../../common/src/conversion"
 import * as err from "../../common/src/err"
 import * as eth from "../../common/src/eth"
@@ -19,12 +18,9 @@ import { guard as eib_guard } from "../../common/src/guard"
 import * as interfaces from "../../common/src/interfaces"
 import * as merkle from "../../common/src/merkle"
 import * as EIB from "../../eib/public/eib"
+import * as eib_types from "../../eib/types/web3-contracts"
 import { guard as config_guard } from "./guard"
 import { Preconfiguration } from "./interfaces"
-
-// From: http://mikemcl.github.io/bignumber.js/
-// Almost never return exponential notation:
-BigNumber.config({ EXPONENTIAL_AT: 1e+9 })
 
 /*====================================================================================================*/
 
@@ -57,6 +53,10 @@ const PAYOUT_GAS = 200000
 
 /*====================================================================================================*/
 
+; (async () => {
+
+/*====================================================================================================*/
+
 log("eibs started.")
 
 /*====================================================================================================*/
@@ -67,7 +67,10 @@ const preconfig = preconfigure()
 
 const node = new IPFS({})
 
-const web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
+// smoelius: For why the use of websockets, see Adam Kipnis's answer to:
+//   web3.eth.subscribe not implemented for web3 version 1.0.0-beta.27
+//   https://stackoverflow.com/a/48174309
+const web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"))
 
 if (preconfig.build_path === undefined) {
   preconfig.build_path = "build"
@@ -78,7 +81,6 @@ const path = preconfig.build_path + "/contracts/Input_bus.json"
 log("reading artifacts from '%s'.", path)
 /* tslint:disable variable-name */
 const Input_bus_artifacts = JSON.parse(fs.readFileSync(path).toString())
-const Input_bus = web3.eth.contract(Input_bus_artifacts.abi)
 /* tslint:enable variable-name */
 log("'%s' read.", path)
 
@@ -89,11 +91,14 @@ if (preconfig.eib_address === undefined) {
   log("eib address unspecified---using %s from artifacts.", preconfig.eib_address)
 }
 
-const eib = Input_bus.at(preconfig.eib_address || "")
+const eib = new web3.eth.Contract(Input_bus_artifacts.abi,
+  preconfig.eib_address || "") as eib_types.Input_bus
+
+const accounts = await web3.eth.getAccounts()
 
 if (preconfig.self_address === undefined) {
-  assert(web3.eth.accounts.length >= 1)
-  preconfig.self_address = web3.eth.defaultAccount = web3.eth.accounts[0]
+  assert(accounts.length >= 1)
+  preconfig.self_address = accounts[0]
   log("self address unspecified---using '%s'.", preconfig.self_address)
 }
 
@@ -101,8 +106,8 @@ if (preconfig.payee_address === undefined) {
   if (!preconfig.debug_flag) {
     preconfig.payee_address = null
   } else {
-    assert(web3.eth.accounts.length >= 2)
-    preconfig.payee_address = web3.eth.defaultAccount = web3.eth.accounts[1]
+    assert(accounts.length >= 2)
+    preconfig.payee_address = accounts[1]
     log("payee address unspecified---using '%s'.", preconfig.payee_address)
   }
 }
@@ -143,183 +148,183 @@ const config = config_guard.Configuration(preconfig)
 
 const mem_cache: { [key: string]: interfaces.File_info; } = {}
 
-let filter: Web3.FilterResult
+let subscription: web3_types.Subscribe<web3_types.Log>
 
 /*====================================================================================================*/
 
-node.on("ready", () => {
-  filter = eth.handle_block_events(
+node.on("ready", async () => {
+  subscription = eth.subscription_of(eth.handle_block_events(
     web3,
-    { fromBlock: "latest" },
+    // smoelius: Listening from the most recent block facilitates testing.
+    { fromBlock: await web3.eth.getBlockNumber() },
     [{
-      abi: eib.abi,
+      abi: Input_bus_artifacts.abi,
       event_callbacks: [{
         event: "Request_announced",
-        callback: event => {
+        callback: event => new Promise<void>((resolve, reject) => {
           const request = eib_guard.Request_announced(event)
           log_event(chalk.bold.red, "Request_announced", request)
-          const ipfs_hash = conversion.ipfs_multihash_from_uint256(request.file_addr[0])
+          const ipfs_hash = conversion.ipfs_multihash_from_uint256(conversion.bn_from_bignumber(
+            request.file_addr[0]))
           log("supplying request %d...", request.req_id)
           let data_length: number
           let proof_length: number
           let supply_gas_estimate: number
           if (config.model_flag) {
             data_length = merkle.calculate_data_length(
-              request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber(), request.start.toNumber(),
-              request.end.toNumber())
-            proof_length = merkle.calculate_proof_length(request.start.toNumber(),
-              request.end.toNumber(), request.file_addr[EIB.IPFSKEC256_FILE_LENGTH].toNumber())
+              conversion.bn_from_bignumber(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]).toNumber(),
+              conversion.bn_from_bignumber(request.start).toNumber(),
+              conversion.bn_from_bignumber(request.end).toNumber()
+            )
+            proof_length = merkle.calculate_proof_length(
+              conversion.bn_from_bignumber(request.start).toNumber(),
+              conversion.bn_from_bignumber(request.end).toNumber(),
+              conversion.bn_from_bignumber(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]).toNumber()
+            )
             supply_gas_estimate = model_estimate_supply_gas(data_length, proof_length)
             log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
           }
-          node.files.cat(ipfs_hash, mem_cache_file_handler(ipfs_hash, (file, file_info) => {
-            // smoelius: TODO: Verify that request still requires a response (i.e., has not been
-            // canceled or already responded to).
-            const data = merkle.extract_data(file, request.start.toNumber(), request.end.toNumber())
-            const proof = merkle.extract_proof(request.start.toNumber(), request.end.toNumber(),
-              file_info.file_length, file_info.merkle_tree)
+          node.files.cat(ipfs_hash, mem_cache_file_handler(ipfs_hash, async (file, file_info) => {
+            const data = merkle.extract_data(
+              file,
+              conversion.bn_from_bignumber(request.start).toNumber(),
+              conversion.bn_from_bignumber(request.end).toNumber()
+            )
+            const proof = merkle.extract_proof(
+              conversion.bn_from_bignumber(request.start).toNumber(),
+              conversion.bn_from_bignumber(request.end).toNumber(),
+              file_info.file_length,
+              file_info.merkle_tree
+            )
             assert(data_length === undefined || data_length === data.length)
             assert(proof_length === undefined || proof_length === proof.length)
             if (supply_gas_estimate === undefined) {
-              supply_gas_estimate = web3_estimate_supply_gas(data, proof, request)
+              supply_gas_estimate = await web3_estimate_supply_gas(
+                conversion.bn_from_bignumber(request.req_id), data, proof)
               log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
               // const unsupply_gas_estimate = web3_estimate_unsupply_gas(request.req_id)
               // log("request %d unsupply gas estimate: %d", request.req_id, unsupply_gas_estimate)
             }
-            const gas = Math.ceil((config.gas_cap_adjustment || 0)
-              * (supply_gas_estimate + request.callback_gas.toNumber()))
+            const gas = Math.ceil(config.gas_cap_adjustment
+              * (supply_gas_estimate + conversion.bn_from_bignumber(request.callback_gas).toNumber()))
             log("request %d gas: %d", request.req_id, gas)
-            const gas_price = price_gas(gas, request.value)
-            log("request %d gas price: %s Gwei", request.req_id, gas_price.dividedBy("10e9"))
-            try {
-              const receipt = web3.eth.getTransactionReceipt(eib.supply(
+            const gas_price = price_gas(gas, conversion.bn_from_bignumber(request.value))
+            log("request %d gas price: %s Gwei", request.req_id,
+              web3.utils.fromWei(gas_price.toString(), "gwei"))
+            web3.eth.sendTransaction({
+              data: eib.methods.supply(
                 EIB.FLAGS_NONE,
-                request.req_id,
-                data,
-                proof,
-                {
-                  from: config.self_address,
-                  gas: gas,
-                  gasPrice : gas_price
-                }
-              ))
-              if (receipt !== null) {
-                log("request %s gas used: %d", request.req_id, receipt.gasUsed)
-              }
+                request.req_id.toString(),
+                data.map(conversion.to_hex),
+                proof.map(conversion.to_hex)
+              ).encodeABI(),
+              from: config.self_address,
+              to: eib._address,
+              gas: gas,
+              gasPrice : gas_price.toString()
+            }).then(receipt => {
+              log("request %s gas used: %d", request.req_id, receipt.gasUsed)
               log("request %d supplied.", request.req_id)
-            } catch (err) {
+            }).catch(err => {
               log(err.toString())
-            }
+            })
           }))
-          return false
-        }
+        })
       },
 
       {
         event: "Request_canceled",
-        callback: event => {
+        callback: event => new Promise<void>((resolve, reject) => {
           const cancellation = eib_guard.Request_canceled(event)
           log_event(chalk.bold.yellow, "Request_canceled", cancellation)
-          return false
-        }
+        })
       },
 
       {
         event: "Request_supplied",
-        callback: event => {
+        callback: event => new Promise<void>((resolve, reject) => {
           const supplement = eib_guard.Request_supplied(event)
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
-            supplement.callback_gas_before.minus(supplement.callback_gas_after).toNumber())
-          if (config.payee_address
-              && new BigNumber(supplement.supplier).equals(config.self_address || "")) {
+            conversion.bn_from_bignumber(supplement.callback_gas_before)
+              .sub(conversion.bn_from_bignumber(supplement.callback_gas_after)).toNumber())
+          if (config.payee_address && web3.utils.toBN(supplement.supplier)
+              .eq(web3.utils.toBN(config.self_address))) {
             log("paying-out request %d...", supplement.req_id)
-            try {
-              eib.payout(
+            web3.eth.sendTransaction({
+              data: eib.methods.payout(
                 EIB.FLAGS_NONE,
-                supplement.req_id,
-                config.payee_address,
-                {
-                  from: config.self_address,
-                  gas: PAYOUT_GAS
-                }
-              )
+                supplement.req_id.toString(),
+                config.payee_address
+              ).encodeABI(),
+              from: config.self_address,
+              to: eib._address,
+              gas: PAYOUT_GAS
+            }).then(receipt => {
               log("request %d paid-out.", supplement.req_id)
-            } catch (err) {
+            }).catch(err => {
               log(err.toString())
-            }
+            })
           }
-          return false
-        }
+        })
       },
 
       {
         event: "Request_paidout",
-        callback: event => {
+        callback: event => new Promise<void>((resolve, reject) => {
           const payout = eib_guard.Request_paidout(event)
           log_event(chalk.bold.magenta, "Request_paidout", payout)
-          return false
-        }
+        })
       }]
     }]
-  )
+  ))
 })
 
 /*====================================================================================================*/
 
-function web3_estimate_supply_gas(data: BigNumber[], proof: BigNumber[],
-    request: interfaces.Request_announced): number {
-  const supply_id = new Buffer(4)
-  supply_id.writeUInt32BE(SUPPLY_SELECTOR, 0)
-  const supply_call = Buffer.concat([
-      supply_id,
-      conversion.buffer_from_uint256(new BigNumber(EIB.FLAG_SUPPLY_SIMULATE)),
-      conversion.buffer_from_uint256(request.req_id),
-      conversion.buffer_from_uint256(new BigNumber(128)),
-      conversion.buffer_from_uint256(new BigNumber(128 + (1 + data.length) * 32))
-    ].concat([conversion.buffer_from_uint256(new BigNumber(data.length))])
-    .concat(data.map(conversion.buffer_from_uint256))
-    .concat([conversion.buffer_from_uint256(new BigNumber(proof.length))])
-    .concat(proof.map(conversion.buffer_from_uint256))
-  )
-  const supply_gas_estimate = web3.eth.estimateGas({
-    to: eib.address,
-    data: supply_call.toString("hex"),
-    from: config.self_address
-  }) - eth.G_TXDATANONZERO + eth.G_TXDATAZERO - UNSUPPLY_GAS_COST
-  return supply_gas_estimate
+function web3_estimate_supply_gas(req_id: BN, data: BN[], proof: BN[]): Promise<number> {
+  return (async () => await eib.methods.supply(
+      EIB.FLAG_SUPPLY_SIMULATE,
+      req_id.toString(),
+      data.map(conversion.to_hex),
+      proof.map(conversion.to_hex)
+    ).estimateGas({
+      from: config.self_address
+    }) - eth.G_TXDATANONZERO + eth.G_TXDATAZERO // smoelius: For FLAG_SUPPLY_SIMULATE.
+      - UNSUPPLY_GAS_COST
+  )()
 }
 
 /*====================================================================================================*/
 
-function web3_estimate_unsupply_gas(req_id: BigNumber): number {
+function web3_estimate_unsupply_gas(req_id: BN): Promise<number> {
   const unsupply_id = new Buffer(4)
   unsupply_id.writeUInt32BE(UNSUPPLY_SELECTOR, 0)
   const unsupply_call = Buffer.concat([
       unsupply_id,
       conversion.buffer_from_uint256(req_id)
   ])
-  const unsupply_gas_estimate = web3.eth.estimateGas({
-    to: eib.address,
-    data: unsupply_call.toString("hex"),
-    from: config.self_address
-  }) - eth.calculate_transaction_overhead(unsupply_call) - eth.R_SCLEAR
-  return unsupply_gas_estimate
+  return (async () => await eib.methods.unsupply(
+      req_id.toString()
+    ).estimateGas({
+      from: config.self_address
+    }) - eth.calculate_transaction_overhead(unsupply_call) - eth.R_SCLEAR
+  )()
 }
 
 /*====================================================================================================*/
 
 function model_estimate_supply_gas(data_length: number, proof_length: number): number {
-  const a = (config.calibration || [])[0]
-  const b = (config.calibration || [])[1]
-  const c = (config.calibration || [])[2]
+  const a = config.calibration[0]
+  const b = config.calibration[1]
+  const c = config.calibration[2]
   return a * data_length + b * proof_length + c
 }
 
 /*====================================================================================================*/
 
-function price_gas(gas: number, value: BigNumber): BigNumber {
-  return value.dividedBy(1 + (config.profit || 0) / 100).dividedToIntegerBy(gas)
+function price_gas(gas: number, value: BN): BN {
+  return value.divn(gas * (1 + config.profit / 100))
 }
 
 /*====================================================================================================*/
@@ -371,7 +376,7 @@ function disk_cache_file_handler(ipfs_hash: string,
         log("'%s' read.", path)
         file_info_callback(file, {
           file_length: file_info.file_length,
-          merkle_tree: file_info.merkle_tree.map(conversion.to_bignumber)
+          merkle_tree: file_info.merkle_tree.map(web3.utils.toBN)
         })
       } catch (read_err) {
         if (read_err.code === "ENOENT") {
@@ -586,5 +591,9 @@ function log(message: string, ...optional_params: any[]): void {
 function _log(style: (s: string) => string, message: string, ...optional_params: any[]): void {
   console.log(style("%s: " + message), new Date().toString(), ...optional_params)
 }
+
+/*====================================================================================================*/
+
+})() // async
 
 /*====================================================================================================*/

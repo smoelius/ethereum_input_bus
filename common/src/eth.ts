@@ -2,15 +2,15 @@
  * eth.ts
  *====================================================================================================*/
 
-import assert from "assert"
 import { logParser } from "ether-pudding"
-import types = require("ethereum-types")
 import Hasher from "js-sha3"
 import Web3 from "web3"
+import * as web3_types from "web3/types"
+import { none } from "./promise"
 
 /*====================================================================================================*/
 
-// export const BLOCK_GAS_LIMIT = 4712388
+export const BLOCK_GAS_LIMIT = 4712388
 
 export const G_MID           =     8
 export const G_JUMPDEST      =     1
@@ -28,6 +28,10 @@ export const C_JUMPDEST      = G_JUMPDEST
 
 /*====================================================================================================*/
 
+export type Tx_hash = string
+
+/*====================================================================================================*/
+
 export interface Abi_event_callback<T> {
   abi: any
   event_callbacks: Array<Event_callback<T>>
@@ -35,8 +39,18 @@ export interface Abi_event_callback<T> {
 
 export interface Event_callback<T> {
   event: string
-  callback: (event: any, receipt: types.TransactionReceipt) => T
+  callback: (event: any, receipt: web3_types.TransactionReceipt) => Promise<T>
 }
+
+export interface Subscription_promise<T> {
+  _0: web3_types.Subscribe<web3_types.Log>
+  _1: Promise<T>
+}
+
+export function subscription_of<T>(obj: Subscription_promise<T>):
+  web3_types.Subscribe<web3_types.Log> { return obj._0 }
+
+export function promise_of<T>(obj: Subscription_promise<T>): Promise<T> { return obj._1 }
 
 /*====================================================================================================*/
 
@@ -54,93 +68,68 @@ export function calculate_transaction_overhead(data: Buffer): number {
 
 /*====================================================================================================*/
 
-export function handle_receipt_events(promised_receipt: Promise<types.TransactionReceipt | null>,
-    abi_event_callbacks: Array<Abi_event_callback<boolean>>,
-    assert = ((value: boolean) => { return })): void {
-  (async () => {
-    const receipt = await promised_receipt
-    if (receipt === null) {
-      return assert(false)
-    }
-
-    // console.log(JSON.stringify(receipt.logs))
-
-    let found = false
+export function handle_receipt_events<T>(abi_event_callbacks: Array<Abi_event_callback<T>>):
+    (receipt: web3_types.TransactionReceipt) => Promise<T> {
+  return receipt => {
+    let result = none<T>()
     for (const abi_event_callback of abi_event_callbacks) {
-      parse(receipt.logs, abi_event_callback.abi).forEach(log => {
-        const event = log as types.DecodedLogEntry<any>
+      parse(receipt.logs || [], abi_event_callback.abi).forEach(log => {
+        const event = log as web3_types.EventLog & { args: any }
         for (const event_callback of abi_event_callback.event_callbacks) {
           if (event.event === event_callback.event) {
-            found = found || event_callback.callback(event.args, receipt)
+            result = Promise.race([result, event_callback.callback(event.args, receipt)])
           }
         }
       })
     }
-
-    assert(found)
-  })().catch(err => {
-    throw err
-  })
+    return result
+  }
 }
 
 /*====================================================================================================*/
 
-export function handle_block_events(web3: Web3, filter_value: string | types.FilterObject,
-    abi_event_callbacks: Array<Abi_event_callback<boolean>>): Web3.FilterResult {
-  const filter = web3.eth.filter(filter_value)
-  filter.watch((err, log) => {
-    if (err) {
-      throw err
-    }
-    for (const abi_event_callback of abi_event_callbacks) {
-      parse([log], abi_event_callback.abi).forEach(log => {
-        (async () => {
-          const event = log as types.DecodedLogEntry<any>
-          for (const event_callback of abi_event_callback.event_callbacks) {
-            if (event.event === event_callback.event) {
-              const receipt = await promisify<types.TransactionReceipt | null>(
-                callback => web3.eth.getTransactionReceipt(log.transactionHash, callback))
-              if (receipt === null) {
-                return assert(false)
-              }
-              if (event_callback.callback(event.args, receipt)) {
-                filter.stopWatching()
+export function handle_block_events<T>(web3: Web3, options: web3_types.Logs,
+    abi_event_callbacks: Array<Abi_event_callback<T>>): Subscription_promise<T> {
+  // smoelius: web3.eth.subscribe's type is broken.
+  const subscription
+    = web3.eth.subscribe("logs", options) as unknown as web3_types.Subscribe<web3_types.Log>
+  return {
+    _0: subscription,
+    _1: new Promise((resolve, reject) => {
+      subscription.on("data", log => {
+        for (const abi_event_callback of abi_event_callbacks) {
+          parse([log], abi_event_callback.abi).forEach(log => {
+            const event = log as web3_types.EventLog & { args: any }
+            for (const event_callback of abi_event_callback.event_callbacks) {
+              if (event.event === event_callback.event) {
+                Promise.resolve(log.transactionHash)
+                .then(web3.eth.getTransactionReceipt)
+                .then(receipt => event_callback.callback(event.args, receipt))
+                .then(result => {
+                  // smoelius: @types/web3/types.d.ts's Subscribe type is broken.
+                  (subscription as any).unsubscribe((err: any, _: any) => {
+                    if (err) {
+                      reject(err)
+                    } else {
+                      resolve(result)
+                    }
+                  })
+                })
               }
             }
-          }
-        })().catch(err => {
-          throw err
-        })
+          })
+        }
       })
-    }
-  })
-  return filter
+    })
+  }
 }
 
 /*====================================================================================================*/
 
-export function parse(logs: types.LogEntry[], abi: types.ContractAbi):
-    Array<types.LogEntry | types.DecodedLogEntry<any>> {
+export function parse(logs: web3_types.Log[], abi: any):
+    Array<web3_types.Log | (web3_types.EventLog & { args: any })> {
   // smoelius: logParser modifies the logs!!!
   return logs.map(log => log.hasOwnProperty("event") ? log : logParser([log], abi)[0])
-}
-
-/*====================================================================================================*
- * smoelius: "promisify" is adapted from 0xcaff's answer to:
- *   web3.js with promisified API
- *   https://ethereum.stackexchange.com/a/24238
- *====================================================================================================*/
-
-export function promisify<T>(inner: (callback: (err: Error, result: T) => void) => void): Promise<T> {
-  return new Promise<T>((resolve, reject) =>
-    inner((err: Error, result: T) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve(result)
-      }
-    })
-  )
 }
 
 /*====================================================================================================*/

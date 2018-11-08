@@ -21,7 +21,7 @@ export const FLAG_SUPPLY_SIMULATE = math.set_bit(0, I_FLAG_SUPPLY_SIMULATE)
 
 export const LTIOV_NONE = 0
 
-export const PAYEE_DEFAULT = 0
+export const PAYEE_DEFAULT = "0x0000000000000000000000000000000000000000"
 
 /*====================================================================================================*/
 

@@ -4,17 +4,18 @@
 
 import assert from "assert"
 import { BigNumber } from "bignumber.js"
+import BN from "bn.js"
 import bs58 from "bs58"
 
 /*====================================================================================================*/
 
-export function ipfs_multihash_from_uint256(x: BigNumber): string {
+export function ipfs_multihash_from_uint256(x: BN): string {
   return bs58.encode(Buffer.concat([new Buffer([0x12, 0x20]), buffer_from_uint256(x)]))
 }
 
 /*====================================================================================================*/
 
-export function uint256_from_ipfs_multihash(ipfs_multihash: string): BigNumber {
+export function uint256_from_ipfs_multihash(ipfs_multihash: string): BN {
   const buf = Buffer.from(bs58.decode(ipfs_multihash))
   assert(buf.length >= 2)
   assert(buf[0] === 0x12)
@@ -24,7 +25,8 @@ export function uint256_from_ipfs_multihash(ipfs_multihash: string): BigNumber {
 
 /*====================================================================================================*/
 
-export function buffer_from_uint256(x: BigNumber): Buffer {
+export function buffer_from_uint256(x: BN): Buffer {
+  // smoelius: The next comment should be revisited now that I am using BN instead of BigNumber.
   // smoelius: The best way that I know to convert a buffer to a BigNumber is to go through string.
   // See, e.g.,:
   //   https://github.com/MikeMcl/bignumber.js/issues/115
@@ -43,15 +45,27 @@ export function buffer_from_uint256(x: BigNumber): Buffer {
 
 /*====================================================================================================*/
 
-export function uint256_from_buffer(buf: Buffer): BigNumber {
+export function uint256_from_buffer(buf: Buffer): BN {
   assert(buf.length === 32)
-  return new BigNumber(buf.toString("hex"), 16)
+  return new BN(buf.toString("hex"), 16)
 }
 
 /*====================================================================================================*/
 
-export function to_bignumber(value: string): BigNumber {
-  return new BigNumber(value)
+export function bignumber_from_bn(x: BN): BigNumber {
+  return new BigNumber(x.toString(10))
+}
+
+/*====================================================================================================*/
+
+export function bn_from_bignumber(x: BigNumber): BN {
+  return new BN(x.toString(10))
+}
+
+/*====================================================================================================*/
+
+export function to_hex(x: BN): string {
+  return "0x" + x.toString(16)
 }
 
 /*====================================================================================================*/

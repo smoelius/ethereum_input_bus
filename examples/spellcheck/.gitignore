@@ -1,5 +1,6 @@
 /build
 /Dict.sol
 /dist
+/types
 /words.sorted
 /words-*.el7.noarch.rpm
