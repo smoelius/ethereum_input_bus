@@ -20,7 +20,7 @@ test:
 	$(MAKE) -C ../eib deploy
 	( \
 	  $(MAKE) run > /dev/null & \
-	  trap "kill $$!" EXIT ; \
+	  trap "kill $$! ; wait" EXIT ; \
 	  EIB_EXTERNAL_SUPPLIER=1 $(NPX) mocha \
 	)
 

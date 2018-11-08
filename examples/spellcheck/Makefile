@@ -77,7 +77,7 @@ test:
 	$(MAKE) deploy
 	( \
 	  $(MAKE) -C ../../eibs_ts run > /dev/null & \
-	  trap "kill $$!" EXIT ; \
+	  trap "kill $$! ; wait" EXIT ; \
 	  $(NPX) mocha \
 	)
 
