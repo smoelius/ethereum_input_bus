@@ -33,6 +33,7 @@ const DEFAULT_PROFIT = 2 // percent
 
 const SUPPLY_SELECTOR = eth.selector("supply(uint256,uint256,uint256[],uint256[])")
 const UNSUPPLY_SELECTOR = eth.selector("unsupply(uint256)")
+const PAYOUT_SELECTOR = eth.selector("payout(uint256,uint256,address)")
 
 const UNSUPPLY_SELECTION_GAS_COST = 427
 const UNSUPPLY_INTRO_GAS_COST = 63 + eth.C_JUMP
@@ -48,8 +49,6 @@ const UNSUPPLY_GAS_COST =
   + UNSUPPLY_INTRO_GAS_COST
   + UNSUPPLY_MAIN_GAS_COST
   + UNSUPPLY_MEMORY_GAS_COST
-
-const PAYOUT_GAS = 200000
 
 /*====================================================================================================*/
 
@@ -182,7 +181,8 @@ node.on("ready", async () => {
               conversion.bn_from_bignumber(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]).toNumber()
             )
             supply_gas_estimate = model_estimate_supply_gas(data_length, proof_length)
-            log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
+            log("request %d supply excluding callback gas estimate: %d", request.req_id,
+              supply_gas_estimate)
           }
           node.files.cat(ipfs_hash, mem_cache_file_handler(ipfs_hash, async (file, file_info) => {
             const data = merkle.extract_data(
@@ -201,15 +201,16 @@ node.on("ready", async () => {
             if (supply_gas_estimate === undefined) {
               supply_gas_estimate = await web3_estimate_supply_gas(
                 conversion.bn_from_bignumber(request.req_id), data, proof)
-              log("request %d supply gas estimate: %d", request.req_id, supply_gas_estimate)
+              log("request %d supply excluding callback gas estimate: %d", request.req_id,
+                supply_gas_estimate)
               // const unsupply_gas_estimate = web3_estimate_unsupply_gas(request.req_id)
               // log("request %d unsupply gas estimate: %d", request.req_id, unsupply_gas_estimate)
             }
             const gas = Math.ceil(config.gas_cap_adjustment
               * (supply_gas_estimate + conversion.bn_from_bignumber(request.callback_gas).toNumber()))
-            log("request %d gas: %d", request.req_id, gas)
+            log("request %d supply gas estimate: %d", request.req_id, gas)
             const gas_price = price_gas(gas, conversion.bn_from_bignumber(request.value))
-            log("request %d gas price: %s Gwei", request.req_id,
+            log("request %d supply gas price: %s Gwei", request.req_id,
               web3.utils.fromWei(gas_price.toString(), "gwei"))
             web3.eth.sendTransaction({
               data: eib.methods.supply(
@@ -223,7 +224,7 @@ node.on("ready", async () => {
               gas: gas,
               gasPrice : gas_price.toString()
             }).then(receipt => {
-              log("request %s gas used: %d", request.req_id, receipt.gasUsed)
+              log("request %s supply gas used: %d", request.req_id, receipt.gasUsed)
               log("request %d supplied.", request.req_id)
             }).catch(err => {
               log(err.toString())
@@ -242,7 +243,7 @@ node.on("ready", async () => {
 
       {
         event: "Request_supplied",
-        callback: event => new Promise<void>((resolve, reject) => {
+        callback: event => new Promise<void>(async (resolve, reject) => {
           const supplement = eib_guard.Request_supplied(event)
           log_event(chalk.bold.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
@@ -251,6 +252,9 @@ node.on("ready", async () => {
           if (config.payee_address && web3.utils.toBN(supplement.supplier)
               .eq(web3.utils.toBN(config.self_address))) {
             log("paying-out request %d...", supplement.req_id)
+            const payout_gas_estimate = await web3_estimate_payout_gas(conversion.bn_from_bignumber(
+              supplement.req_id))
+            log("request %d payout gas estimate: %d", supplement.req_id, payout_gas_estimate)
             web3.eth.sendTransaction({
               data: eib.methods.payout(
                 EIB.FLAGS_NONE,
@@ -259,8 +263,9 @@ node.on("ready", async () => {
               ).encodeABI(),
               from: config.self_address,
               to: eib._address,
-              gas: PAYOUT_GAS
+              gas: payout_gas_estimate
             }).then(receipt => {
+              log("request %s payout gas used: %d", supplement.req_id, receipt.gasUsed)
               log("request %d paid-out.", supplement.req_id)
             }).catch(err => {
               log(err.toString())
@@ -325,6 +330,35 @@ function model_estimate_supply_gas(data_length: number, proof_length: number): n
 
 function price_gas(gas: number, value: BN): BN {
   return value.divn(gas * (1 + config.profit / 100))
+}
+
+/*====================================================================================================*/
+
+/* smoelius: Expect the payout gas estimate to be much larger than the gas actually used.  Here is
+  * Edmund Edgar's answer to:
+  *   What are the limitations to estimateGas and when would its estimate be considerably wrong?
+  *   https://ethereum.stackexchange.com/a/25896
+  *
+  *   One limitation (from my own observation, hopefully someone will correct me if I'm
+  *   miunderstanding) is that even if estimateGas estimates correctly, that doesn't give you the gas
+  *   limit that you need to set when sending your transaction.
+  *
+  *   The issue is that refunds are credited only at the end of the transaction, so if you have a
+  *   transaction that does some work, and cleans up some storage as it goes, you need to set a high
+  *   enough gas limit to do all the work without the benefit of the refund.
+  *
+  * Also note that, unlike supply, there is no "race" associated with payout.  Hence, there is no
+  * need for an analogous model_estimate_payout_gas function.
+  */
+
+function web3_estimate_payout_gas(req_id: BN): Promise<number> {
+  return eib.methods.payout(
+    EIB.FLAGS_NONE,
+    req_id.toString(),
+    config.payee_address || ""
+  ).estimateGas({
+    from: config.self_address
+  })
 }
 
 /*====================================================================================================*/
