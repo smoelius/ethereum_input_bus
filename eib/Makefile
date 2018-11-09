@@ -28,7 +28,7 @@ JSON := build/contracts/Input_bus.json \
       check_get_supplier_selection_gas_cost \
       check_get_data_selection_gas_cost \
       check_get_proof_selection_gas_cost \
-  test deploy clobber clean
+  xyz.tsv test deploy clobber clean
 
 #======================================================================================================#
 
@@ -185,6 +185,9 @@ Proxy_requestor_opcodes.txt: build/contracts/Proxy_requestor.json
 
 #======================================================================================================#
 
+xyz.tsv:
+	$(MAKE) test 2>&1 1>/dev/tty | cut -f 1-3 > $@
+
 test:
 	$(MAKE) deploy
 	$(NPX) mocha
@@ -197,6 +200,7 @@ clobber:
 clean:
 	rm -f Input_bus_opcodes.txt
 	rm -f Proxy_requestor_opcodes.txt
+	rm -f xyz.tsv
 	rm -rf build
 	rm -rf types
 
