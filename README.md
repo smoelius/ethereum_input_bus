@@ -31,7 +31,7 @@ The EIB repository consists of:
 
   * the [EIB contract](eib/README.md) itself (receives requests, verifies responses, etc.),
 
-  * a [prototype EIB supplier](eibs_ts/README.md) (`eibs`) implemented in TypeScript,
+  * a [prototype EIB supplier](eibs/README.md) (`eibs`) implemented in TypeScript,
 
   * [example webapps](examples/README.md) written to use EIB, and
 
@@ -85,7 +85,7 @@ EIB can be tested in two ways:
   * with `eibs` responding to requests (useful for testing `eibs`).
 
 Details are given in the EIB contract's [README](eib/README.md) and in `eibs`'
-[README](eibs_ts/README.md), respectively.
+[README](eibs/README.md), respectively.
 
 
 ## Reporting bugs

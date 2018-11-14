@@ -7,7 +7,7 @@ EIB comes with the following utilities.
 
   * `ipfs_multihash_from_uint256` `X`: Converts 256-bit word `X` to an IPFS multihash.  Assumes SHA256.
 
-  * `kectr`: Reads from standard input and generates a Merkle tree as [`eibs`](../eibs_ts/README.md)
+  * `kectr`: Reads from standard input and generates a Merkle tree as [`eibs`](../eibs/README.md)
     would store in its disk cache.  The `--root` option can be used to obtain just the root of the
     Merkle tree.
 

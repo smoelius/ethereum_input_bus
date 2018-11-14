@@ -9,5 +9,5 @@ if ! grep '"name"[[:space:]]*:[[:space:]]*"ethereum_input_bus"' package.json > /
   echo "This file must be sourced at the top of the project directory." >&2
 else
   export PATH="$PWD/bin:$PATH"
-  export EIBS_DIR="$PWD/eibs_ts"
+  export EIBS_DIR="$PWD/eibs"
 fi

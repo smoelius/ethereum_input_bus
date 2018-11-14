@@ -4,7 +4,7 @@
     "common/test/*",
     "eib/public/*",
     "eib/test/*",
-    "eibs_ts/src/*",
+    "eibs/src/*",
     "examples/*/src/*",
     "examples/*/test/*",
     "util/*"

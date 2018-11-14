@@ -76,7 +76,7 @@ test:
 	$(MAKE) -C ../../eib deploy
 	$(MAKE) deploy
 	( \
-	  $(MAKE) -C ../../eibs_ts run > /dev/null & \
+	  $(MAKE) -C ../../eibs run > /dev/null & \
 	  trap "kill $$! ; wait" EXIT ; \
 	  $(NPX) mocha \
 	)

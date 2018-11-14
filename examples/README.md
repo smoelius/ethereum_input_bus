@@ -32,6 +32,6 @@ directory, but skip step 5.
 
 7. cd to X and type `./launch.sh`.
 
-8. In another terminal window, cd to the `eibs_ts` directory and type `make run`.
+8. In another terminal window, cd to the `eibs` directory and type `make run`.
 
 9. In a web browser, go to "<http://127.0.0.1:8000>".

@@ -1,6 +1,6 @@
 # Protoype EIB supplier
 
-The `eibs_ts` directory contains a prototype EIB supplier (`eibs`) implemented in TypeScript.
+The `eibs` directory contains a prototype EIB supplier (`eibs`) implemented in TypeScript.
 
 
 ## Options
@@ -16,4 +16,4 @@ To test `eibs`, perform the steps below.
 
 1. cd to the top of the EIB repository and type `make`.
 
-2. cd to the `eibs_ts` directory and type `make test`.
+2. cd to the `eibs` directory and type `make test`.
