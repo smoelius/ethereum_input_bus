@@ -160,7 +160,7 @@ node.on("ready", async () => {
         event: "Request_announced",
         callback: event => new Promise<void>((resolve, reject) => {
           const request = eib_guard.Request_announced(event)
-          log_event(chalk.bold.red, "Request_announced", request)
+          log_event(chalk.red, "Request_announced", request)
           const ipfs_hash = conversion.ipfs_multihash_from_uint256(conversion.bn_from_bignumber(
             request.file_addr[0]))
           log("supplying request %d...", request.req_id)
@@ -235,7 +235,7 @@ node.on("ready", async () => {
         event: "Request_canceled",
         callback: event => new Promise<void>((resolve, reject) => {
           const cancellation = eib_guard.Request_canceled(event)
-          log_event(chalk.bold.yellow, "Request_canceled", cancellation)
+          log_event(chalk.yellow, "Request_canceled", cancellation)
         })
       },
 
@@ -243,7 +243,7 @@ node.on("ready", async () => {
         event: "Request_supplied",
         callback: event => new Promise<void>(async (resolve, reject) => {
           const supplement = eib_guard.Request_supplied(event)
-          log_event(chalk.bold.green, "Request_supplied", supplement)
+          log_event(chalk.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
             conversion.bn_from_bignumber(supplement.callback_gas_before)
               .sub(conversion.bn_from_bignumber(supplement.callback_gas_after)).toNumber())
@@ -276,7 +276,7 @@ node.on("ready", async () => {
         event: "Request_paidout",
         callback: event => new Promise<void>((resolve, reject) => {
           const payout = eib_guard.Request_paidout(event)
-          log_event(chalk.bold.magenta, "Request_paidout", payout)
+          log_event(chalk.magenta, "Request_paidout", payout)
         })
       }]
     }]
