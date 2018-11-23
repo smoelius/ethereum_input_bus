@@ -10,22 +10,7 @@ SUBDIRS := $(filter-out Makefile README.md, $(wildcard *))
 
 all: pre_tsc post_tsc
 
-pre_tsc:
-	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
-
-post_tsc:
-	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
-
-check:
-	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
-
-test:
-	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
-
-clobber:
-	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
-
-clean:
+pre_tsc post_tsc check test clobber clean:
 	for SUBDIR in $(SUBDIRS); do $(MAKE) -C $$SUBDIR $@; done
 
 #======================================================================================================#
