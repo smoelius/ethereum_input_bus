@@ -30,7 +30,7 @@ directory, but skip step 5.
 
 6. cd to the top of the EIB repository and type `make`.
 
-7. cd to X and type `./launch.sh`.
+7. cd to X and type `./serve.sh`.
 
 8. In another terminal window, cd to the `eibs` directory and type `make run`.
 
