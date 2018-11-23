@@ -12,6 +12,6 @@ if (process.argv.length !== 3) {
   process.exit(1)
 }
 
-console.log("0x%s", selector(process.argv[2]).toString(16))
+console.log("%s", selector(process.argv[2]))
 
 /*====================================================================================================*/

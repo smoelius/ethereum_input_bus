@@ -54,8 +54,14 @@ export function promise_of<T>(obj: Subscription_promise<T>): Promise<T> { return
 
 /*====================================================================================================*/
 
-export function selector(signature: string): number {
-  return parseInt(Hasher.keccak256(signature).substr(0, 8), 16)
+/* tslint:disable variable-name */
+const Web3_ = new Web3()
+/* tslint:ensable variable-name */
+
+/*====================================================================================================*/
+
+export function selector(signature: string): string {
+  return Web3_.eth.abi.encodeFunctionSignature(signature)
 }
 
 /*====================================================================================================*/

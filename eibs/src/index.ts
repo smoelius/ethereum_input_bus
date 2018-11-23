@@ -31,9 +31,7 @@ const DEFAULT_CALIBRATION = [24080.023891, 24089.387372, 114298.527304]
 const DEFAULT_GAS_CAP_ADJUSTMENT = 64 / 63
 const DEFAULT_PROFIT = 2 // percent
 
-const SUPPLY_SELECTOR = eth.selector("supply(uint256,uint256,uint256[],uint256[])")
 const UNSUPPLY_SELECTOR = eth.selector("unsupply(uint256)")
-const PAYOUT_SELECTOR = eth.selector("payout(uint256,uint256,address)")
 
 const UNSUPPLY_SELECTION_GAS_COST = 427
 const UNSUPPLY_INTRO_GAS_COST = 63 + eth.C_JUMP
@@ -304,7 +302,7 @@ function web3_estimate_supply_gas(req_id: BN, data: BN[], proof: BN[]): Promise<
 
 function web3_estimate_unsupply_gas(req_id: BN): Promise<number> {
   const unsupply_id = new Buffer(4)
-  unsupply_id.writeUInt32BE(UNSUPPLY_SELECTOR, 0)
+  unsupply_id.writeUInt32BE(Number(UNSUPPLY_SELECTOR), 0)
   const unsupply_call = Buffer.concat([
       unsupply_id,
       conversion.buffer_from_uint256(req_id)
