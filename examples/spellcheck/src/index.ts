@@ -174,7 +174,8 @@ function spellcheck(): void {
         }]
       }]
     )).catch((err: any) => {
-      stop_with_error(true, "Could not find spellcheck initiation event.")
+      console.log(err)
+      stop_with_error(true, "Could not find spellcheck initiation event (see console for details).")
     })
   })().catch(err => {
     throw err
@@ -238,7 +239,9 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
                   }]
                 }]
               )).catch(err => {
-                stop_with_error(true, "Could not find request announcement event.")
+                console.log(err)
+                stop_with_error(true,
+                  "Could not find request announcement event (see console for details).")
               })
           }
         }, {
@@ -265,7 +268,8 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
         }]
       }]
     )).catch(err => {
-      stop_with_error(true, "Could not find spellcheck update/end event.")
+      console.log(err)
+      stop_with_error(true, "Could not find spellcheck update/end event (see console for details).")
     })
 }
 
@@ -310,7 +314,8 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): Promise<void> {
         }]
       }]
     )).catch((err: any) => {
-      stop_with_error(true, "Could not find spellcheck refund event.")
+      console.log(err)
+      stop_with_error(true, "Could not find spellcheck refund event (see console for details).")
     })
   })()
 }

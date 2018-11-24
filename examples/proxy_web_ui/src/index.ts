@@ -189,7 +189,8 @@ function request(): void {
         }]
       }]
     )).catch(err => {
-      stop_with_error(true, "Could not find request announcement event.")
+      console.log(err)
+      stop_with_error(true, "Could not find request announcement event (see console for details).")
     })
   })().catch(err => {
     throw err
