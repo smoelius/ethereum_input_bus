@@ -18,6 +18,8 @@ declare const it: (title: string, fn: () => Promise<void>) => void
 
 const VERBOSE = true
 
+const SPELLCHECK_WEI = Web3.utils.toWei(new BN(10), "milliether")
+
 const SPELLCHECK_GAS = 600000
 const REFUND_GAS     = 300000
 
@@ -94,7 +96,7 @@ function test(valid: boolean, word: string): void {
         word
       ).encodeABI(),
       to: sc._address,
-      value: "10e15", // 10 milliether
+      value: SPELLCHECK_WEI.toString(),
       gas: SPELLCHECK_GAS
     }).then(eth.handle_receipt_events(
       [{

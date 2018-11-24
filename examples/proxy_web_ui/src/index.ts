@@ -104,7 +104,7 @@ function request(): void {
     const merkle_root = web.as_get<HTMLInputElement>("merkle_root").value
     const start = web.as_get<HTMLInputElement>("start").value
     const end = web.as_get<HTMLInputElement>("end").value
-    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
+    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "milliether")
 
     hex = ""
     ascii = []

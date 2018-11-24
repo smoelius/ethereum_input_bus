@@ -4,6 +4,7 @@
 
 import assert from "assert"
 import BN from "bn.js"
+import Web3 from "web3"
 import * as conversion from "../../common/src/conversion"
 import * as eth from "../../common/src/eth"
 import { get_file_info } from "../../common/src/file_info"
@@ -20,7 +21,7 @@ declare const it: (title: string, fn: () => Promise<any>) => void
 
 /*====================================================================================================*/
 
-const REQUEST_ETHER = new BN("10e15") // 10 milliether
+const REQUEST_WEI = Web3.utils.toWei(new BN(10), "milliether")
 
 const REQUEST_GAS = 300000
 const SUPPLY_GAS  = 600000
@@ -77,7 +78,7 @@ test((context: interfaces.Test_context) => {
               EIB.PROXY_CALLBACK_GAS_DEFAULT
             ).encodeABI(),
             to: context.proxy._address,
-            value: REQUEST_ETHER.toString(),
+            value: REQUEST_WEI.toString(),
             gas: REQUEST_GAS
           }).then(eth.handle_receipt_events(
             [{
@@ -288,7 +289,7 @@ test((context: interfaces.Test_context) => {
                   const payment = guard.Request_paidout(event)
                   assert(conversion.bn_from_bignumber(payment.req_id)
                     .eq(conversion.bn_from_bignumber(request.req_id)))
-                  assert(conversion.bn_from_bignumber(payment.value).eq(REQUEST_ETHER))
+                  assert(conversion.bn_from_bignumber(payment.value).eq(REQUEST_WEI))
                   return Promise.resolve()
                 }
               }]

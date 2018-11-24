@@ -82,9 +82,10 @@ window.addEventListener("load", () => {
       if (request.readyState !== 4 || request.status !== 200) {
         return
       }
-      const safe_low = JSON.parse(request.responseText).safeLow
-      web.set_text("gas_rate", (safe_low / 10).toString())
-      web.set_text("file_ether", gas.muln(safe_low).div(new BN("10e9")).toString())
+      const safe_low = JSON.parse(request.responseText).safeLow / 10 // gwei
+      web.set_text("gas_rate", safe_low.toString())
+      web.set_text("file_ether", window.web3.utils.fromWei(
+        window.web3.utils.toWei(gas.muln(safe_low), "gwei"), "ether").toString())
     }
     request.open("GET", "https://ethgasstation.info/json/ethgasAPI.json", true)
     request.send()
@@ -121,7 +122,7 @@ function spellcheck(): void {
     if (word === "") {
       return stop_with_error(false, "Please specify a word.")
     }
-    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "finney")
+    const value = window.web3.utils.toWei(web.as_get<HTMLInputElement>("value").value, "milliether")
 
     web.show("checking_message", false)
     web.show("valid_message", false)
@@ -258,7 +259,7 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
             const value_used = conversion.bn_from_bignumber(sc_init.value)
               .sub(conversion.bn_from_bignumber(sc_end.unspent_value))
             web.set_text("value_used",
-              window.web3.utils.fromWei(value_used.toString(), "finney").toString())
+              window.web3.utils.fromWei(value_used.toString(), "milliether").toString())
             web.show("value_used_container", true)
             if (conversion.bn_from_bignumber(sc_end.unspent_value).gtn(0)) {
               return refund(sc_init)
@@ -306,7 +307,7 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): Promise<void> {
               return none<void>()
             }
             web.set_text("value_refunded",
-              window.web3.utils.fromWei(sc_refund.value.toString(), "finney").toString())
+              window.web3.utils.fromWei(sc_refund.value.toString(), "milliether").toString())
             web.show("value_refunded_container", true)
             stop()
             return Promise.resolve()
