@@ -171,7 +171,7 @@ function request(): void {
                       return none<void>()
                     }
                     const data = Buffer.concat(supplement.data.map(window.web3.utils.toBN)
-                      .map(conversion.buffer_from_uint256).slice(0, Number(end) - Number(start)))
+                      .map(conversion.buffer_from_uint256)).slice(0, Number(end) - Number(start))
                     hex = data.toString("hex").split("").map((x, i) => i % 2 === 0 ? x : x + " ")
                       .join("")
                     ascii = new Buffer(data.map(x => x < 32 || x > 126 ? 46 /* '.' */ : x))
