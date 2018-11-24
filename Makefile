@@ -58,7 +58,7 @@ pre_tsc: node_modules
 
 compile: common/src/index.js
 
-common/src/index.js: $(TYPES) $(TI) $(SRC) node_modules node_modules/web3-legacy
+common/src/index.js: $(TYPES) $(TI) $(SRC) node_modules
 	$(NPX) $(TSC)
 	@# smoelius: The modification time of common/src/index.js is used to indicate the last time that tsc
 	@# was invoked.
@@ -69,13 +69,6 @@ common/src/index.js: $(TYPES) $(TI) $(SRC) node_modules node_modules/web3-legacy
 
 node_modules: package.json
 	npm install
-	sed -i 's,\(require("web3\)\(/lib/web3/event.js")\),\1-legacy\2,' node_modules/ether-pudding/index.js
-
-# smoelius: Installing web3-0.20.6 is a stopgap measure until I can find an alternative to using
-# ether-pudding's logParser.
-node_modules/web3-legacy:
-	git clone https://github.com/ethereum/web3.js.git $@
-	cd $@ && git checkout tags/v0.20.6 && npm install
 
 post_tsc: node_modules
 	$(MAKE) -C common $@

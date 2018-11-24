@@ -9,7 +9,7 @@ import ti from "./interfaces-ti"
 /*====================================================================================================*/
 
 /* tslint:disable no-string-literal */
-ti["BigNumber"] = checker.iface([], {})
+// ti["BigNumber"] = checker.iface([], {})
 /* tslint:enable no-string-literal */
 
 const checkers = checker.createCheckers(ti)

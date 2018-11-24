@@ -161,7 +161,7 @@ node.on("ready", async () => {
         callback: event => new Promise<void>((resolve, reject) => {
           const request = eib_guard.Request_announced(event)
           log_event(chalk.red, "Request_announced", request)
-          const ipfs_hash = conversion.ipfs_multihash_from_uint256(conversion.bn_from_bignumber(
+          const ipfs_hash = conversion.ipfs_multihash_from_uint256(conversion.bn_from_decimal(
             request.file_addr[0]))
           log("supplying request %d...", request.req_id)
           let data_length: number
@@ -169,14 +169,14 @@ node.on("ready", async () => {
           let supply_gas_estimate: number
           if (config.model_flag) {
             data_length = merkle.calculate_data_length(
-              conversion.bn_from_bignumber(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]).toNumber(),
-              conversion.bn_from_bignumber(request.start).toNumber(),
-              conversion.bn_from_bignumber(request.end).toNumber()
+              Number(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]),
+              Number(request.start),
+              Number(request.end)
             )
             proof_length = merkle.calculate_proof_length(
-              conversion.bn_from_bignumber(request.start).toNumber(),
-              conversion.bn_from_bignumber(request.end).toNumber(),
-              conversion.bn_from_bignumber(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH]).toNumber()
+              Number(request.start),
+              Number(request.end),
+              Number(request.file_addr[EIB.IPFSKEC256_FILE_LENGTH])
             )
             supply_gas_estimate = model_estimate_supply_gas(data_length, proof_length)
             log("request %d supply excluding callback gas estimate: %d", request.req_id,
@@ -185,12 +185,12 @@ node.on("ready", async () => {
           node.files.cat(ipfs_hash, mem_cache_file_handler(ipfs_hash, async (file, file_info) => {
             const data = merkle.extract_data(
               file,
-              conversion.bn_from_bignumber(request.start).toNumber(),
-              conversion.bn_from_bignumber(request.end).toNumber()
+              Number(request.start),
+              Number(request.end)
             )
             const proof = merkle.extract_proof(
-              conversion.bn_from_bignumber(request.start).toNumber(),
-              conversion.bn_from_bignumber(request.end).toNumber(),
+              Number(request.start),
+              Number(request.end),
               file_info.file_length,
               file_info.merkle_tree
             )
@@ -198,24 +198,24 @@ node.on("ready", async () => {
             assert(proof_length === undefined || proof_length === proof.length)
             if (supply_gas_estimate === undefined) {
               supply_gas_estimate = await web3_estimate_supply_gas(
-                conversion.bn_from_bignumber(request.req_id), data, proof)
+                conversion.bn_from_decimal(request.req_id), data, proof)
               log("request %d supply excluding callback gas estimate: %d", request.req_id,
                 supply_gas_estimate)
               // const unsupply_gas_estimate = web3_estimate_unsupply_gas(request.req_id)
               // log("request %d unsupply gas estimate: %d", request.req_id, unsupply_gas_estimate)
             }
             const gas = Math.ceil(config.gas_cap_adjustment
-              * (supply_gas_estimate + conversion.bn_from_bignumber(request.callback_gas).toNumber()))
+              * (supply_gas_estimate + conversion.bn_from_decimal(request.callback_gas).toNumber()))
             log("request %d supply gas estimate: %d", request.req_id, gas)
-            const gas_price = price_gas(gas, conversion.bn_from_bignumber(request.value))
+            const gas_price = price_gas(gas, conversion.bn_from_decimal(request.value))
             log("request %d supply gas price: %s Gwei", request.req_id,
               web3.utils.fromWei(gas_price.toString(), "gwei"))
             web3.eth.sendTransaction({
               data: eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data.map(conversion.to_hex),
-                proof.map(conversion.to_hex)
+                data.map(conversion.hex_from_bn),
+                proof.map(conversion.hex_from_bn)
               ).encodeABI(),
               from: config.self_address,
               to: eib._address,
@@ -245,12 +245,12 @@ node.on("ready", async () => {
           const supplement = eib_guard.Request_supplied(event)
           log_event(chalk.green, "Request_supplied", supplement)
           log("request %d callback gas used: %d", supplement.req_id,
-            conversion.bn_from_bignumber(supplement.callback_gas_before)
-              .sub(conversion.bn_from_bignumber(supplement.callback_gas_after)).toNumber())
-          if (config.payee_address && web3.utils.toBN(supplement.supplier)
-              .eq(web3.utils.toBN(config.self_address))) {
+            conversion.bn_from_decimal(supplement.callback_gas_before)
+              .sub(conversion.bn_from_decimal(supplement.callback_gas_after)).toNumber())
+          if (config.payee_address && conversion.bn_from_hex(supplement.supplier)
+              .eq(conversion.bn_from_hex(config.self_address))) {
             log("paying-out request %d...", supplement.req_id)
-            const payout_gas_estimate = await web3_estimate_payout_gas(conversion.bn_from_bignumber(
+            const payout_gas_estimate = await web3_estimate_payout_gas(conversion.bn_from_decimal(
               supplement.req_id))
             log("request %d payout gas estimate: %d", supplement.req_id, payout_gas_estimate)
             web3.eth.sendTransaction({
@@ -289,8 +289,8 @@ function web3_estimate_supply_gas(req_id: BN, data: BN[], proof: BN[]): Promise<
   return (async () => await eib.methods.supply(
       EIB.FLAG_SUPPLY_SIMULATE,
       req_id.toString(),
-      data.map(conversion.to_hex),
-      proof.map(conversion.to_hex)
+      data.map(conversion.hex_from_bn),
+      proof.map(conversion.hex_from_bn)
     ).estimateGas({
       from: config.self_address
     }) - eth.G_TXDATANONZERO + eth.G_TXDATAZERO // smoelius: For FLAG_SUPPLY_SIMULATE.
@@ -408,7 +408,7 @@ function disk_cache_file_handler(ipfs_hash: string,
         log("'%s' read.", path)
         file_info_callback(file, {
           file_length: file_info.file_length,
-          merkle_tree: file_info.merkle_tree.map(web3.utils.toBN)
+          merkle_tree: file_info.merkle_tree.map(conversion.bn_from_hex)
         })
       } catch (read_err) {
         if (read_err.code === "ENOENT") {
@@ -567,12 +567,16 @@ function preconfigure(): Preconfiguration {
 /*====================================================================================================*/
 
 function delete_false_properties(obj: any): any {
-  return Object.keys(obj).reduce((obj_new: any, key) => {
-    if (!(obj[key] === false)) {
-      obj_new[key] = obj[key]
-    }
-    return obj_new
-  }, {})
+  return Object.keys(obj)
+    .reduce(
+      (obj_new: any, key) => {
+        if (!(obj[key] === false)) {
+          obj_new[key] = obj[key]
+        }
+        return obj_new
+      },
+      {}
+    )
 }
 
 /*====================================================================================================*/

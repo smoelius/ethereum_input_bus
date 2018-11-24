@@ -2,7 +2,6 @@
  * interfaces.ts
  *====================================================================================================*/
 
-import { BigNumber } from "bignumber.js"
 import BN from "bn.js"
 import Web3 from "web3"
 import * as web3_types from "web3/types"
@@ -18,54 +17,54 @@ export interface File_info {
 /*====================================================================================================*/
 
 export interface Echo {
-  value: BigNumber
+  value: string
 }
 
 export interface Request_announced {
-  req_id: BigNumber
+  req_id: string
   requestor: string
-  file_addr_type: BigNumber
-  file_addr: BigNumber[]
-  start: BigNumber
-  end: BigNumber
-  ltiov: BigNumber
+  file_addr_type: string
+  file_addr: string[]
+  start: string
+  end: string
+  ltiov: string
   callback_id: string // bytes4
-  callback_gas: BigNumber
-  value: BigNumber
+  callback_gas: string
+  value: string
 }
 
 export interface Request_canceled {
-  req_id: BigNumber
+  req_id: string
 }
 
 export interface Request_supplied {
-  req_id: BigNumber
+  req_id: string
   supplier: string
   data: string[]
   proof: string[]
-  callback_gas_before: BigNumber
-  callback_gas_after: BigNumber
+  callback_gas_before: string
+  callback_gas_after: string
   callback_result: boolean
 }
 
 export interface Request_paidout {
-  req_id: BigNumber
+  req_id: string
   payee: string
-  value: BigNumber
+  value: string
 }
 
 export interface Proxy_callback {
-  req_id: BigNumber
+  req_id: string
   supplier: string
   data: string[]
   proof: string[]
-  get_supplier_gas_before: BigNumber
-  get_supplier_gas_after: BigNumber
-  get_data_gas_before: BigNumber
-  get_data_gas_after: BigNumber
-  get_proof_gas_before: BigNumber
-  get_proof_gas_after: BigNumber
-  end_of_memory: BigNumber
+  get_supplier_gas_before: string
+  get_supplier_gas_after: string
+  get_data_gas_before: string
+  get_data_gas_after: string
+  get_proof_gas_before: string
+  get_proof_gas_after: string
+  end_of_memory: string
 }
 
 /*====================================================================================================*/

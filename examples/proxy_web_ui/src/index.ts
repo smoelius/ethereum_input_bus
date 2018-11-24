@@ -119,7 +119,7 @@ function request(): void {
     const file_addr = [
       ipfs_hash,
       new BN(file_length),
-      window.web3.utils.toBN(merkle_root)
+      conversion.bn_from_hex(merkle_root)
     ]
 
     const gas_price = await window.web3.eth.getGasPrice()
@@ -127,7 +127,7 @@ function request(): void {
       data: proxy.methods.request(
         EIB.FLAGS_NONE,
         EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
-        file_addr.map(conversion.to_hex),
+        file_addr.map(conversion.hex_from_bn),
         start,
         end,
         EIB.LTIOV_NONE,
@@ -146,15 +146,15 @@ function request(): void {
           event: "Request_announced",
           callback: (event, receipt) => {
             const request = guard.Request_announced(event)
-            if (!(window.web3.utils.toBN(request.requestor).eq(window.web3.utils.toBN(proxy_address))
-                && conversion.bn_from_bignumber(request.file_addr_type)
+            if (!(conversion.bn_from_hex(request.requestor).eq(conversion.bn_from_hex(proxy_address))
+                && conversion.bn_from_decimal(request.file_addr_type)
                   .eqn(EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT)
-                && conversion.json_equals(request.file_addr.map(conversion.bn_from_bignumber),
+                && conversion.json_equals(request.file_addr.map(conversion.bn_from_decimal),
                   file_addr)
-                && conversion.bn_from_bignumber(request.start).eq(new BN(start))
-                && conversion.bn_from_bignumber(request.end).eq(new BN(end))
-                && conversion.bn_from_bignumber(request.ltiov).eqn(EIB.LTIOV_NONE)
-                && conversion.bn_from_bignumber(request.value).eq(new BN(value)))) {
+                && Number(request.start) === Number(start)
+                && Number(request.end) === Number(end)
+                && conversion.bn_from_decimal(request.ltiov).eqn(EIB.LTIOV_NONE)
+                && conversion.bn_from_decimal(request.value).eq(new BN(value)))) {
               return none<void>()
             }
             const obj = eth.handle_block_events(
@@ -166,11 +166,11 @@ function request(): void {
                   event: "Request_supplied",
                   callback: (event, receipt) => {
                     const supplement = guard.Request_supplied(event)
-                    if (!conversion.bn_from_bignumber(request.req_id)
-                        .eq(conversion.bn_from_bignumber(supplement.req_id))) {
+                    if (!conversion.bn_from_decimal(request.req_id)
+                        .eq(conversion.bn_from_decimal(supplement.req_id))) {
                       return none<void>()
                     }
-                    const data = Buffer.concat(supplement.data.map(window.web3.utils.toBN)
+                    const data = Buffer.concat(supplement.data.map(conversion.bn_from_hex)
                       .map(conversion.buffer_from_uint256)).slice(0, Number(end) - Number(start))
                     hex = data.toString("hex").split("").map((x, i) => i % 2 === 0 ? x : x + " ")
                       .join("")

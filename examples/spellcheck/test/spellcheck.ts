@@ -111,7 +111,7 @@ function test(valid: boolean, word: string): void {
             if (VERBOSE) {
               console.log(JSON.stringify(sc_init))
             }
-            sc_id = conversion.bn_from_bignumber(sc_init.sc_id)
+            sc_id = conversion.bn_from_decimal(sc_init.sc_id)
             return Promise.resolve(receipt.blockNumber)
           }
         }]
@@ -125,7 +125,7 @@ function test(valid: boolean, word: string): void {
           event: "Spellcheck_update",
           callback: event => {
             const sc_update = sc_guard.Spellcheck_update(event)
-            if (!sc_id.eq(conversion.bn_from_bignumber(sc_update.sc_id))) {
+            if (!sc_id.eq(conversion.bn_from_decimal(sc_update.sc_id))) {
               return none<void>()
             }
             if (VERBOSE) {
@@ -137,14 +137,14 @@ function test(valid: boolean, word: string): void {
           event: "Spellcheck_end",
           callback: event => {
             const sc_end = sc_guard.Spellcheck_end(event)
-            if (!sc_id.eq(conversion.bn_from_bignumber(sc_end.sc_id))) {
+            if (!sc_id.eq(conversion.bn_from_decimal(sc_end.sc_id))) {
               return none<void>()
             }
             if (VERBOSE) {
               console.log(JSON.stringify(sc_end))
             }
             assert(sc_end.valid === valid)
-            unspent_value = conversion.bn_from_bignumber(sc_end.unspent_value)
+            unspent_value = conversion.bn_from_decimal(sc_end.unspent_value)
             return Promise.resolve()
           }
         }]
@@ -168,10 +168,10 @@ function test(valid: boolean, word: string): void {
           event: "Spellcheck_refund",
           callback: event => {
             const sc_refund = sc_guard.Spellcheck_refund(event)
-            if (!sc_id.eq(conversion.bn_from_bignumber(sc_refund.sc_id))) {
+            if (!sc_id.eq(conversion.bn_from_decimal(sc_refund.sc_id))) {
               return none<void>()
             }
-            assert(unspent_value.eq(conversion.bn_from_bignumber(sc_refund.value)))
+            assert(unspent_value.eq(conversion.bn_from_decimal(sc_refund.value)))
             return Promise.resolve()
           }
         }]

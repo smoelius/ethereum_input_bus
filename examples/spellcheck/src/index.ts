@@ -163,9 +163,9 @@ function spellcheck(): void {
           event: "Spellcheck_init",
           callback: (event, receipt) => {
             const sc_init = sc_guard.Spellcheck_init(event)
-            if (!(window.web3.utils.toBN(sc_init.requestor).eq(window.web3.utils.toBN(accounts[0]))
+            if (!(conversion.bn_from_hex(sc_init.requestor).eq(conversion.bn_from_hex(accounts[0]))
                 && sc_init.word === word
-                && conversion.bn_from_bignumber(sc_init.value).eq(new BN(value)))) {
+                && conversion.bn_from_decimal(sc_init.value).eq(new BN(value)))) {
               return none<void>()
             }
             gas_used = 0
@@ -196,8 +196,8 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
           event: "Spellcheck_update",
           callback: (event, receipt) => {
             const sc_update = sc_guard.Spellcheck_update(event)
-            if (!conversion.bn_from_bignumber(sc_init.sc_id)
-                .eq(conversion.bn_from_bignumber(sc_update.sc_id))) {
+            if (!conversion.bn_from_decimal(sc_init.sc_id)
+                .eq(conversion.bn_from_decimal(sc_update.sc_id))) {
               return none<void>()
             }
             update_gas_used(receipt)
@@ -209,10 +209,10 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
                     event: "Request_announced",
                     callback: (event, receipt) => {
                       const request = eib_guard.Request_announced(event)
-                      if (!(window.web3.utils.toBN(window.sc_address)
-                            .eq(window.web3.utils.toBN(request.requestor))
-                          && conversion.bn_from_bignumber(sc_update.req_id)
-                            .eq(conversion.bn_from_bignumber(request.req_id)))) {
+                      if (!(conversion.bn_from_hex(window.sc_address)
+                            .eq(conversion.bn_from_hex(request.requestor))
+                          && conversion.bn_from_decimal(sc_update.req_id)
+                            .eq(conversion.bn_from_decimal(request.req_id)))) {
                         return none<void>()
                       }
                       const obj = eth.handle_block_events(
@@ -224,8 +224,8 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
                             event: "Request_supplied",
                             callback: (event, receipt) => {
                               const supplement = eib_guard.Request_supplied(event)
-                              if (!conversion.bn_from_bignumber(request.req_id)
-                                  .eq(conversion.bn_from_bignumber(supplement.req_id))) {
+                              if (!conversion.bn_from_decimal(request.req_id)
+                                  .eq(conversion.bn_from_decimal(supplement.req_id))) {
                                 return none<void>()
                               }
                               return Promise.resolve(receipt)
@@ -249,19 +249,19 @@ function spellcheck_handle_receipt_events(sc_init: sc_interfaces.Spellcheck_init
           event: "Spellcheck_end",
           callback: (event, receipt) => {
             const sc_end = sc_guard.Spellcheck_end(event)
-            if (!conversion.bn_from_bignumber(sc_init.sc_id)
-                .eq(conversion.bn_from_bignumber(sc_end.sc_id))) {
+            if (!conversion.bn_from_decimal(sc_init.sc_id)
+                .eq(conversion.bn_from_decimal(sc_end.sc_id))) {
               return none<void>()
             }
             update_gas_used(receipt)
             web.show("checking_message", false)
             web.show(sc_end.valid ? "valid_message" : "invalid_message", true)
-            const value_used = conversion.bn_from_bignumber(sc_init.value)
-              .sub(conversion.bn_from_bignumber(sc_end.unspent_value))
+            const value_used = conversion.bn_from_decimal(sc_init.value)
+              .sub(conversion.bn_from_decimal(sc_end.unspent_value))
             web.set_text("value_used",
               window.web3.utils.fromWei(value_used.toString(), "milliether").toString())
             web.show("value_used_container", true)
-            if (conversion.bn_from_bignumber(sc_end.unspent_value).gtn(0)) {
+            if (conversion.bn_from_decimal(sc_end.unspent_value).gtn(0)) {
               return refund(sc_init)
             }
             return Promise.resolve()
@@ -302,8 +302,8 @@ function refund(sc_init: sc_interfaces.Spellcheck_init): Promise<void> {
           event: "Spellcheck_refund",
           callback: event => {
             const sc_refund = sc_guard.Spellcheck_refund(event)
-            if (!conversion.bn_from_bignumber(sc_init.sc_id)
-                .eq(conversion.bn_from_bignumber(sc_refund.sc_id))) {
+            if (!conversion.bn_from_decimal(sc_init.sc_id)
+                .eq(conversion.bn_from_decimal(sc_refund.sc_id))) {
               return none<void>()
             }
             web.set_text("value_refunded",

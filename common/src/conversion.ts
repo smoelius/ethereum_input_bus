@@ -3,9 +3,9 @@
  *====================================================================================================*/
 
 import assert from "assert"
-import { BigNumber } from "bignumber.js"
 import BN from "bn.js"
 import bs58 from "bs58"
+import Web3 from "web3"
 
 /*====================================================================================================*/
 
@@ -52,20 +52,27 @@ export function uint256_from_buffer(buf: Buffer): BN {
 
 /*====================================================================================================*/
 
-export function bignumber_from_bn(x: BN): BigNumber {
-  return new BigNumber(x.toString(10))
+export function decimal_from_bn(x: BN): string {
+  return x.toString(10)
 }
 
 /*====================================================================================================*/
 
-export function bn_from_bignumber(x: BigNumber): BN {
-  return new BN(x.toString(10))
+export function bn_from_decimal(value: string): BN {
+  assert(/^[0-9]+$/.test(value))
+  return new BN(value)
 }
 
 /*====================================================================================================*/
 
-export function to_hex(x: BN): string {
+export function hex_from_bn(x: BN): string {
   return "0x" + x.toString(16)
+}
+
+/*====================================================================================================*/
+
+export function bn_from_hex(value: string): BN {
+  return Web3.utils.toBN((value.startsWith("0x") ? "" : "0x") + value)
 }
 
 /*====================================================================================================*/

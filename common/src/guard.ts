@@ -9,7 +9,6 @@ import ti from "./interfaces-ti"
 /*====================================================================================================*/
 
 /* tslint:disable no-string-literal */
-ti["BigNumber"] = checker.iface([], {})
 ti["BN"] = checker.iface([], {})
 ti["Web3"] = checker.iface([], {})
 ti["eib_types.Input_bus"] = checker.iface([], {})

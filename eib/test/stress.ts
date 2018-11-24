@@ -70,7 +70,7 @@ test((context: interfaces.Test_context) => {
             data: context.proxy.methods.request(
               EIB.FLAGS_NONE,
               EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT,
-              file_addr.map(conversion.to_hex),
+              file_addr.map(conversion.hex_from_bn),
               start,
               end,
               EIB.LTIOV_NONE,
@@ -87,12 +87,12 @@ test((context: interfaces.Test_context) => {
                 event: "Request_announced",
                 callback: (event, receipt) => {
                   request = guard.Request_announced(event)
-                  assert(conversion.bn_from_bignumber(request.file_addr_type)
+                  assert(conversion.bn_from_decimal(request.file_addr_type)
                     .eqn(EIB.IPFS_WITH_KECCAK256_MERKLE_ROOT))
-                  assert(conversion.json_equals(request.file_addr.map(conversion.bn_from_bignumber),
+                  assert(conversion.json_equals(request.file_addr.map(conversion.bn_from_decimal),
                     file_addr))
-                  assert(conversion.bn_from_bignumber(request.start).eqn(start))
-                  assert(conversion.bn_from_bignumber(request.end).eqn(end))
+                  assert(Number(request.start) === start)
+                  assert(Number(request.end) === end)
                   block_number = receipt.blockNumber
                   return Promise.resolve()
                 }
@@ -114,8 +114,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data_first_negated.map(conversion.to_hex),
-                proof.map(conversion.to_hex)
+                data_first_negated.map(conversion.hex_from_bn),
+                proof.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -128,8 +128,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data_last_negated.map(conversion.to_hex),
-                proof.map(conversion.to_hex)
+                data_last_negated.map(conversion.hex_from_bn),
+                proof.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -142,8 +142,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data.map(conversion.to_hex),
-                proof_first_negated.map(conversion.to_hex)
+                data.map(conversion.hex_from_bn),
+                proof_first_negated.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -156,8 +156,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data.map(conversion.to_hex),
-                proof_last_negated.map(conversion.to_hex)
+                data.map(conversion.hex_from_bn),
+                proof_last_negated.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -170,8 +170,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data_first_negated.map(conversion.to_hex),
-                proof_first_negated.map(conversion.to_hex)
+                data_first_negated.map(conversion.hex_from_bn),
+                proof_first_negated.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -184,8 +184,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data_last_negated.map(conversion.to_hex),
-                proof_last_negated.map(conversion.to_hex)
+                data_last_negated.map(conversion.hex_from_bn),
+                proof_last_negated.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -206,8 +206,8 @@ test((context: interfaces.Test_context) => {
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
                 request.req_id.toString(),
-                data.map(conversion.to_hex),
-                proof.map(conversion.to_hex)
+                data.map(conversion.hex_from_bn),
+                proof.map(conversion.hex_from_bn)
               ).encodeABI(),
               to: context.eib._address,
               gas: SUPPLY_GAS
@@ -220,12 +220,12 @@ test((context: interfaces.Test_context) => {
                 event: "Request_supplied",
                 callback: (event, receipt) => {
                   const supplement = guard.Request_supplied(event)
-                  const callback_gas_used = conversion.bn_from_bignumber(supplement.callback_gas_before)
-                    .sub(conversion.bn_from_bignumber(supplement.callback_gas_after))
-                  assert(conversion.bn_from_bignumber(supplement.req_id)
-                    .eq(conversion.bn_from_bignumber(request.req_id)))
-                  assert(conversion.json_equals(supplement.data.map(context.web3.utils.toBN), data))
-                  assert(conversion.json_equals(supplement.proof.map(context.web3.utils.toBN), proof))
+                  const callback_gas_used = conversion.bn_from_decimal(supplement.callback_gas_before)
+                    .sub(conversion.bn_from_decimal(supplement.callback_gas_after))
+                  assert(conversion.bn_from_decimal(supplement.req_id)
+                    .eq(conversion.bn_from_decimal(request.req_id)))
+                  assert(conversion.json_equals(supplement.data.map(conversion.bn_from_hex), data))
+                  assert(conversion.json_equals(supplement.proof.map(conversion.bn_from_hex), proof))
                   if (!(context.options.external_supplier === true)
                       && (data.length !== 0 || proof.length !== 0)) {
                     console.error(`${data.length}\t${proof.length}`
@@ -237,7 +237,7 @@ test((context: interfaces.Test_context) => {
                   // smoelius: I have not figured out why, but when data and proof are empty, get_data
                   // and get_proof each use 71 less gas.
                   assert(data.length === 0 || proof.length === 0
-                    || callback_gas_used.eq(conversion.bn_from_bignumber(request.callback_gas)))
+                    || callback_gas_used.eq(conversion.bn_from_decimal(request.callback_gas)))
                   return found(FLAG_SUPPLEMENT)
                 }
               }]
@@ -247,10 +247,10 @@ test((context: interfaces.Test_context) => {
                 event: "Proxy_callback",
                 callback: (event, receipt) => {
                   const callback = guard.Proxy_callback(event)
-                  assert(conversion.bn_from_bignumber(callback.req_id)
-                    .eq(conversion.bn_from_bignumber(request.req_id)))
-                  assert(conversion.json_equals(callback.data.map(context.web3.utils.toBN), data))
-                  assert(conversion.json_equals(callback.proof.map(context.web3.utils.toBN), proof))
+                  assert(conversion.bn_from_decimal(callback.req_id)
+                    .eq(conversion.bn_from_decimal(request.req_id)))
+                  assert(conversion.json_equals(callback.data.map(conversion.bn_from_hex), data))
+                  assert(conversion.json_equals(callback.proof.map(conversion.bn_from_hex), proof))
                   // smoelius: The next statement is useful for calculating the gas costs of
                   // get_supplier, get_data, and get_data_proof.
                   /* if (!(context.options.external_supplier === true)) {
@@ -287,9 +287,9 @@ test((context: interfaces.Test_context) => {
                 event: "Request_paidout",
                 callback: (event, receipt) => {
                   const payment = guard.Request_paidout(event)
-                  assert(conversion.bn_from_bignumber(payment.req_id)
-                    .eq(conversion.bn_from_bignumber(request.req_id)))
-                  assert(conversion.bn_from_bignumber(payment.value).eq(REQUEST_WEI))
+                  assert(conversion.bn_from_decimal(payment.req_id)
+                    .eq(conversion.bn_from_decimal(request.req_id)))
+                  assert(conversion.bn_from_decimal(payment.value).eq(REQUEST_WEI))
                   return Promise.resolve()
                 }
               }]

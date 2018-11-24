@@ -5,10 +5,6 @@
  * * I do not necessarily want to deploy a new instance of Input_bus, as "truffle test" would do.
  * * Truffle only decodes log entries for the invoked contract, which limits its applicability to my
  *   situation anyway.
- * Currently, I am using (a seemingly outdated version of) ether-pudding to decode log entries from
- * transaction receipts.  See:
- *   How do I parse the transaction receipt log with web3.js?
- *   https://ethereum.stackexchange.com/a/2101
  *====================================================================================================*/
 
 import assert from "assert"

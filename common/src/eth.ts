@@ -2,7 +2,6 @@
  * eth.ts
  *====================================================================================================*/
 
-import { logParser } from "ether-pudding"
 import Hasher from "js-sha3"
 import Web3 from "web3"
 import * as web3_types from "web3/types"
@@ -79,8 +78,7 @@ export function handle_receipt_events<T>(abi_event_callbacks: Array<Abi_event_ca
   return receipt => {
     let result = none<T>()
     for (const abi_event_callback of abi_event_callbacks) {
-      parse(receipt.logs || [], abi_event_callback.abi).forEach(log => {
-        const event = log as web3_types.EventLog & { args: any }
+      parse(receipt.logs || [], abi_event_callback.abi).forEach(event => {
         for (const event_callback of abi_event_callback.event_callbacks) {
           if (event.event === event_callback.event) {
             result = Promise.race([result, event_callback.callback(event.args, receipt)])
@@ -104,8 +102,7 @@ export function handle_block_events<T>(web3: Web3, options: web3_types.Logs,
     _1: new Promise((resolve, reject) => {
       subscription.on("data", log => {
         for (const abi_event_callback of abi_event_callbacks) {
-          parse([log], abi_event_callback.abi).forEach(log => {
-            const event = log as web3_types.EventLog & { args: any }
+          parse([log], abi_event_callback.abi).forEach(event => {
             for (const event_callback of abi_event_callback.event_callbacks) {
               if (event.event === event_callback.event) {
                 Promise.resolve(log.transactionHash)
@@ -132,10 +129,48 @@ export function handle_block_events<T>(web3: Web3, options: web3_types.Logs,
 
 /*====================================================================================================*/
 
-export function parse(logs: web3_types.Log[], abi: any):
-    Array<web3_types.Log | (web3_types.EventLog & { args: any })> {
-  // smoelius: logParser modifies the logs!!!
-  return logs.map(log => log.hasOwnProperty("event") ? log : logParser([log], abi)[0])
+interface Decoded_log {
+  transaction_hash: string
+  event: string
+  args: any
+}
+
+function parse(logs: web3_types.Log[], abi: any[]): Decoded_log[] {
+  const decoders: { [topic: string]: (log: web3_types.Log) => Decoded_log } = abi
+    .filter(obj => obj.type === "event")
+    .reduce(
+      (decoders: { [topic: string]: (log: web3_types.Log) => Decoded_log }, event) => {
+        decoders[Web3_.eth.abi.encodeEventSignature(event)] = (log: web3_types.Log) => { return {
+          transaction_hash: log.transactionHash,
+          event: event.name as string,
+          args: delete_array_like_properties(Web3_.eth.abi.decodeLog(event.inputs, log.data,
+            log.topics.slice(1)))
+        }}
+        return decoders
+      },
+      {}
+    )
+  return logs
+    .reduce(
+      (decoded_logs: Decoded_log[], log) =>
+        log.topics.length >= 1 && decoders[log.topics[0]] !== undefined
+          ? decoded_logs.concat(decoders[log.topics[0]](log))
+          : decoded_logs,
+      []
+    )
+}
+
+function delete_array_like_properties(obj: any): any {
+  return Object.keys(obj)
+    .reduce(
+      (obj_new: any, key) => {
+        if (!(/^[0-9]+$/.test(key) || key === "__length__")) {
+          obj_new[key] = obj[key]
+        }
+        return obj_new
+      },
+      {}
+    )
 }
 
 /*====================================================================================================*/
