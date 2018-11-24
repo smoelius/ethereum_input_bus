@@ -108,7 +108,7 @@ test((context: interfaces.Test_context) => {
           const proof_first_negated = proof.map((x, i) => i === 0 ? math.negate_bit_big(x, 255) : x)
           const proof_last_negated = proof.map((x, i) => i !== proof.length - 1 ? x
             : math.negate_bit_big(x, 0))
-          it(title("should fail to supply request with data first bit negated", start, end), () =>
+          it(title("should NOT supply request with data first bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
@@ -122,7 +122,7 @@ test((context: interfaces.Test_context) => {
               assert(/.*\brevert$/.test(err.toString()))
             )
           )
-          it(title("should fail to supply request with data last bit negated", start, end), () =>
+          it(title("should NOT supply request with data last bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
@@ -136,7 +136,7 @@ test((context: interfaces.Test_context) => {
               assert(/.*\brevert$/.test(err.toString()))
             )
           )
-          it(title("should fail to supply request with proof first bit negated", start, end), () =>
+          it(title("should NOT supply request with proof first bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
@@ -150,7 +150,7 @@ test((context: interfaces.Test_context) => {
               assert(/.*\brevert$/.test(err.toString()))
             )
           )
-          it(title("should fail to supply request with proof last bit negated", start, end), () =>
+          it(title("should NOT supply request with proof last bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
@@ -164,8 +164,7 @@ test((context: interfaces.Test_context) => {
               assert(/.*\brevert$/.test(err.toString()))
             )
           )
-          it(title("should fail to supply request with data and proof first bit negated", start, end),
-              () =>
+          it(title("should NOT supply request with data and proof first bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
@@ -179,8 +178,7 @@ test((context: interfaces.Test_context) => {
               assert(/.*\brevert$/.test(err.toString()))
             )
           )
-          it(title("should fail to supply request with data and proof last bit negated", start, end),
-              () =>
+          it(title("should NOT supply request with data and proof last bit negated", start, end), () =>
             context.web3.eth.sendTransaction({
               data: context.eib.methods.supply(
                 EIB.FLAGS_NONE,
