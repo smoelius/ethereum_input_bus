@@ -9,10 +9,11 @@ donation to 0xD07C0Bb4B0E5943cbeD93c337686217D91655a2e.
 Contents
 1. [Introduction](#user-content-introduction)
 2. [Repository contents](#user-content-repository-contents)
-3. [How EIB works](#user-content-how-eib-works)
-4. [Building](#user-content-building)
-5. [Testing](#user-content-testing)
-6. [Reporting bugs](#user-content-reporting-bugs)
+3. [Quick start](#user-content-quick-start)
+4. [How EIB works](#user-content-how-eib-works)
+5. [Building](#user-content-building)
+6. [Testing](#user-content-testing)
+7. [Reporting bugs](#user-content-reporting-bugs)
 
 
 ## Introduction
@@ -36,6 +37,35 @@ The EIB repository consists of:
   * [example webapps](examples/README.md) written to use EIB, and
 
   * [utilities](util/README.md) for working with EIB.
+
+
+## Quick start
+
+![](doc/spellcheck_screenshot.png)
+
+At the top of the EIB repository, type the following.
+
+    make
+    cd examples/spellcheck
+    make demo
+
+**What is going on?**  The command `make demo` does essentially the following.
+
+  * launch a test Ethereum blockchain ([`ganache-cli`](https://github.com/trufflesuite/ganache-cli))
+
+  * deploy several contracts to the blockchain, including one called
+    [`Spellcheck`](https://github.com/smoelius/ethereum_input_bus/blob/master/examples/spellcheck/contracts/Spellcheck.sol)
+
+  * launch a webapp to interact with the `Spellcheck` contract
+
+  * launch an instance of `eibs` to supply data to the contract
+
+  * open the webapp in a browser
+
+The `Spellcheck` contract does what its name suggests: it checks the validity of a word against a
+dictionary.  However, the dictionary is not stored on the blockchain: at 4.8 megabytes, storing that
+much data on the blockchain would be rather expensive.  Instead, the dictionary is stored off-chain;
+when the `Spellcheck` contract needs data from the dictionary, the data is obtained using EIB.
 
 
 ## How EIB works
@@ -70,9 +100,8 @@ A requestor can cancel its request at any time before the data has been supplied
 
 One should be able to build EIB by simply typing `make`.
 
-Alternatively, one can launch [Ganache](https://truffleframework.com/ganache) and type `make full`.
-In addition to building EIB, `make full` runs all post-build checks and all tests.  Warning: On my
-laptop, `make full` currently takes about 11 minutes.
+Alternatively, one can type `make full`.  In addition to building EIB, `make full` runs all post-build
+checks and all tests.  Warning: On my laptop, `make full` currently takes about 12 minutes.
 
 
 ## Testing
