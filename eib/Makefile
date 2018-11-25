@@ -2,8 +2,7 @@
 # Makefile for EIB contracts
 #======================================================================================================#
 
-GREP := grep --color=auto
-NPX  := npx --no-install
+include ../common/variables.mk
 
 JSON := build/contracts/Input_bus.json \
         build/contracts/Migrations.json \
@@ -189,8 +188,13 @@ xyz.tsv:
 	$(MAKE) test 2>&1 1>/dev/tty | cut -f 1-3 > $@
 
 test:
-	$(MAKE) deploy
-	$(NPX) mocha
+	( \
+	  $(FILICIDE_ON_EXIT_BEGIN) ; \
+	  $(NPX) ganache-cli -q & $(PUSH_CHILD) ; \
+	  $(MAKE) clean deploy ; \
+	  $(NPX) mocha ; \
+	  $(FILICIDE_ON_EXIT_END) \
+	)
 
 deploy:
 	(for X in $(JSON); do $(GREP) '"address":' "$$X" || exit 1; done) || $(NPX) truffle deploy

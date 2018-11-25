@@ -2,16 +2,14 @@
 # Makefile for Spellcheck
 #======================================================================================================#
 
-GREP    := grep --color=auto
-NPX     := npx --no-install
-WEBPACK := webpack --mode=development
+include ../../common/variables.mk
 
 JSON := eib_build/contracts/Input_bus.json \
         build/contracts/Migrations.json \
         build/contracts/Spellcheck.json \
         build/contracts/Dict.json
 
-.PHONY: all pre_tsc post_tsc compile types check test deploy clobber clean
+.PHONY: all pre_tsc post_tsc compile types check demo test demo-test deploy clobber clean
 
 #======================================================================================================#
 
@@ -72,13 +70,28 @@ words-3.0-22.el7.noarch.rpm:
 
 check:
 
-test:
-	$(MAKE) -C ../../eib deploy
-	$(MAKE) deploy
+demo test:
+	TARGET=$@ $(MAKE) demo-test
+
+demo-test:
 	( \
-	  $(MAKE) -C ../../eibs run > /dev/null & \
-	  trap "kill $$! ; wait" EXIT ; \
-	  $(NPX) mocha \
+	  $(FILICIDE_ON_EXIT_BEGIN) ; \
+	  $(NPX) ganache-cli -q & $(PUSH_CHILD) ; \
+	  $(MAKE) -C ../../eib clean deploy ; \
+	  $(MAKE) clean deploy ; \
+	  $(MAKE) dist/main.js ; \
+	  ./serve.sh 2>/dev/null & $(PUSH_CHILD) ; \
+	  case '$(TARGET)' in \
+	    demo) \
+	      $(MAKE) -C ../../eibs run & $(PUSH_CHILD) ; \
+	      $(CHROME) http://127.0.0.1:8000/?test ; \
+	      ;; \
+	    test) \
+	      $(MAKE) -C ../../eibs run > /dev/null & $(PUSH_CHILD) ; \
+	      $(NPX) mocha ; \
+	      ;; \
+	  esac ; \
+	  $(FILICIDE_ON_EXIT_END) \
 	)
 
 # smoelius: deploy requires that Dict.sol be generated.  (Since deploy will update *.json, there may be

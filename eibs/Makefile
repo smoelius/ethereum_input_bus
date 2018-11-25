@@ -2,7 +2,7 @@
 # Makefile for prototype EIB supplier implemented in TypeScript
 #======================================================================================================#
 
-NPX := npx --no-install
+include ../common/variables.mk
 
 .PHONY: all pre_tsc post_tsc check test run clobber clean
 
@@ -17,11 +17,13 @@ post_tsc:
 check:
 
 test:
-	$(MAKE) -C ../eib deploy
 	( \
-	  $(MAKE) run > /dev/null & \
-	  trap "kill $$! ; wait" EXIT ; \
-	  EIB_EXTERNAL_SUPPLIER=1 $(NPX) mocha \
+	  $(FILICIDE_ON_EXIT_BEGIN) ; \
+	  $(NPX) ganache-cli -q & $(PUSH_CHILD) ; \
+	  $(MAKE) -C ../eib clean deploy ; \
+	  $(MAKE) run > /dev/null & $(PUSH_CHILD) ; \
+	  EIB_EXTERNAL_SUPPLIER=1 $(NPX) mocha ; \
+	  $(FILICIDE_ON_EXIT_END) \
 	)
 
 run:

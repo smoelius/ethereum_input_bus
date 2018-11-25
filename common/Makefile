@@ -2,7 +2,7 @@
 # Makefile for EIB common files
 #======================================================================================================#
 
-NPX := npx --no-install
+include variables.mk
 
 .PHONY: all pre_tsc post_tsc check test clobber clean
 

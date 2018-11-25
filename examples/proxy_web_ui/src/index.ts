@@ -44,10 +44,13 @@ window.stop = stop
 
 window.addEventListener("load", () => {
   (async () => {
-    if (typeof window.web3 === "undefined") {
-      return stop_with_error(false, "EIB Hex Viewer requires MetaMask.")
+    if (new URLSearchParams(window.location.search).has("test")) {
+      window.web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"))
+    } else if (typeof window.web3 === "undefined") {
+      return stop_with_error(false, "Proxy Web UI requires MetaMask.")
+    } else {
+      window.web3 = new Web3(window.web3.currentProvider)
     }
-    window.web3 = new Web3(window.web3.currentProvider)
 
     if (Object.keys(Proxy_requestor_artifacts.networks).length !== 1) {
       return stop_with_error(true, "Unexpected number of networks.")

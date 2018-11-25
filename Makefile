@@ -9,9 +9,7 @@
 # See also comments regarding pre_tsc and post_tsc in examples/spellcheck/Makefile.
 #======================================================================================================#
 
-GREP := grep --color=auto
-NPX  := npx --no-install
-TSC  := tsc # --traceResolution
+include common/variables.mk
 
 TYPES := eib/types/web3-contracts/index.d.ts \
          $(addsuffix /index.d.ts, $(wildcard examples/*/types/web3-contracts))
