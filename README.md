@@ -54,7 +54,7 @@ At the top of the EIB repository, type the following.
   * launch a test Ethereum blockchain ([`ganache-cli`](https://github.com/trufflesuite/ganache-cli))
 
   * deploy several contracts to the blockchain, including one called
-    [`Spellcheck`](https://github.com/smoelius/ethereum_input_bus/blob/master/examples/spellcheck/contracts/Spellcheck.sol)
+    [`Spellcheck`](examples/spellcheck/contracts/Spellcheck.sol)
 
   * launch a webapp to interact with the `Spellcheck` contract
 
